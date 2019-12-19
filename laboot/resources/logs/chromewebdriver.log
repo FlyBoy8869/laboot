@@ -1,0 +1,143 @@
+[1576693521.167][INFO]: Starting ChromeDriver 78.0.3904.70 (edb9c9f3de0247fd912a77b7f6cae7447f6d3ad5-refs/branch-heads/3904@{#800})
+[1576693521.167][INFO]: Please protect ports used by ChromeDriver and related test frameworks to prevent access by malicious code.
+[1576693521.521][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] COMMAND InitSession {
+   "capabilities": {
+      "alwaysMatch": {
+         "browserName": "chrome",
+         "goog:chromeOptions": {
+            "args": [  ],
+            "extensions": [  ]
+         },
+         "platformName": "any"
+      },
+      "firstMatch": [ {
+
+      } ]
+   },
+   "desiredCapabilities": {
+      "browserName": "chrome",
+      "goog:chromeOptions": {
+         "args": [  ],
+         "extensions": [  ]
+      },
+      "platform": "ANY",
+      "version": ""
+   }
+}
+[1576693521.528][INFO]: Populating Preferences file: {
+   "alternate_error_pages": {
+      "enabled": false
+   },
+   "autofill": {
+      "enabled": false
+   },
+   "browser": {
+      "check_default_browser": false
+   },
+   "distribution": {
+      "import_bookmarks": false,
+      "import_history": false,
+      "import_search_engine": false,
+      "make_chrome_default_for_user": false,
+      "skip_first_run_ui": true
+   },
+   "dns_prefetching": {
+      "enabled": false
+   },
+   "profile": {
+      "content_settings": {
+         "pattern_pairs": {
+            "https://*,*": {
+               "media-stream": {
+                  "audio": "Default",
+                  "video": "Default"
+               }
+            }
+         }
+      },
+      "default_content_setting_values": {
+         "geolocation": 1
+      },
+      "default_content_settings": {
+         "geolocation": 1,
+         "mouselock": 1,
+         "notifications": 1,
+         "popups": 1,
+         "ppapi-broker": 1
+      },
+      "password_manager_enabled": false
+   },
+   "safebrowsing": {
+      "enabled": false
+   },
+   "search": {
+      "suggest_enabled": false
+   },
+   "translate": {
+      "enabled": false
+   }
+}
+[1576693521.532][INFO]: Populating Local State file: {
+   "background_mode": {
+      "enabled": false
+   },
+   "ssl": {
+      "rev_checking": {
+         "enabled": false
+      }
+   }
+}
+[1576693521.550][INFO]: Launching chrome: "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-background-networking --disable-client-side-phishing-detection --disable-default-apps --disable-hang-monitor --disable-popup-blocking --disable-prompt-on-repost --disable-sync --enable-automation --enable-blink-features=ShadowDOMV0 --enable-logging --force-fieldtrials --ignore-certificate-errors --load-extension="C:\Users\charl\AppData\Local\Temp\scoped_dir10620_119998238\internal" --log-level=0 --no-first-run --password-store=basic --remote-debugging-port=0 --test-type=webdriver --use-mock-keychain --user-data-dir="C:\Users\charl\AppData\Local\Temp\scoped_dir10620_93353306" data:,
+[1576693522.350][WARNING]: This version of ChromeDriver has not been tested with Chrome version 79.
+[1576693522.447][INFO]: resolved localhost to ["::1","127.0.0.1"]
+[1576693524.437][WARNING]: Timed out connecting to Chrome, retrying...
+[1576693524.439][INFO]: resolved localhost to ["::1","127.0.0.1"]
+[1576693526.486][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] RESPONSE InitSession {
+   "capabilities": {
+      "acceptInsecureCerts": false,
+      "browserName": "chrome",
+      "browserVersion": "79.0.3945.79",
+      "chrome": {
+         "chromedriverVersion": "78.0.3904.70 (edb9c9f3de0247fd912a77b7f6cae7447f6d3ad5-refs/branch-heads/3904@{#800})",
+         "userDataDir": "C:\\Users\\charl\\AppData\\Local\\Temp\\scoped_dir10620_93353306"
+      },
+      "goog:chromeOptions": {
+         "debuggerAddress": "localhost:50773"
+      },
+      "networkConnectionEnabled": false,
+      "pageLoadStrategy": "normal",
+      "platformName": "windows nt",
+      "proxy": {
+
+      },
+      "setWindowRect": true,
+      "strictFileInteractability": false,
+      "timeouts": {
+         "implicit": 0,
+         "pageLoad": 300000,
+         "script": 30000
+      },
+      "unhandledPromptBehavior": "dismiss and notify"
+   },
+   "sessionId": "2b47df12bfcfefe2cf1b3723be75defe"
+}
+[1576693526.489][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] COMMAND Navigate {
+   "url": "http://127.0.0.1:8080/LineWatch-M Website configuration.html"
+}
+[1576693526.489][INFO]: Waiting for pending navigations...
+[1576693526.493][INFO]: Done waiting for pending navigations. Status: ok
+[1576693528.606][INFO]: Waiting for pending navigations...
+[1576693528.962][INFO]: Done waiting for pending navigations. Status: ok
+[1576693528.962][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] RESPONSE Navigate
+[1576693528.965][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] COMMAND GetSource {
+
+}
+[1576693528.965][INFO]: Waiting for pending navigations...
+[1576693528.966][INFO]: Done waiting for pending navigations. Status: ok
+[1576693529.023][INFO]: Waiting for pending navigations...
+[1576693529.024][INFO]: Done waiting for pending navigations. Status: ok
+[1576693529.024][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] RESPONSE GetSource "\u003Chtml dir=\"ltr\" lang=\"en\">\u003Chead>\n  \u003Cmeta charset=\"utf-8\">\n  \u003Cmeta name=\"theme-color\" content=\"#fff\">\n  \u003Cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1.0,\n                        ..."
+[1576693547.939][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] COMMAND Quit {
+
+}
+[1576693548.001][INFO]: [2b47df12bfcfefe2cf1b3723be75defe] RESPONSE Quit

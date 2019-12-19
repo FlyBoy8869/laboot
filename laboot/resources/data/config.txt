@@ -1,0 +1,26 @@
+# pages/configuration=http://192.168.2.1/index.php/main/configuration
+pages/configuration=http://127.0.0.1:8080/LineWatch-M Website configuration.html
+# pages/modem_status=http://192.168.2.1/index.php/main/modem_status
+pages/modem_status=http://127.0.0.1:8080/LineWatch-M Website modem status.html
+
+main/config_password=Q854Xj8X
+main/admin_user=administrator
+main/admin_password=FMIadm!n
+
+# time in seconds
+main/request_timeout=2
+main/test_time=1500
+main/link_check_time=10
+
+# time in milli-seconds
+main/webdriver_wait_to_close=3000
+
+# valid levels: debug, info, warning, error, critical
+main/debug_level=info
+
+spreadsheet/worksheet=Sensor(s)
+# locations order Sensor1 Sensor2 Sensor3 Sensor4 Sensor5 Sensor6
+spreadsheet/serial_locations=D4 E4 F4 G4 H4 I4
+spreadsheet/result_locations=D5 E5 F5 G5 H5 I5
+
+drivers/chromedriver=laboot\resources\drivers\chromedriver\windows\version_78-0-3904-70\chromedriver.exe

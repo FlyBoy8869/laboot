@@ -1,0 +1,14 @@
+- input serial numbers
+- indicate which serial number to scan for
+- start test
+- start a 25 minute timer
+- while timer not expired
+    - load modem status web page
+    - get source for page
+    - scan source for serial number
+    - if found
+        - parse line for indicators unit has joined and linked to collector
+        - if yes
+            - play success sound
+- timer expired
+    - show message indicating unit failed test
