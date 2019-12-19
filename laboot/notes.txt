@@ -1,5 +1,5 @@
 Command to build standalone executable:
-pyinstaller --name laboot --windowed --add-binary D:\PycharmProjects\laboot\laboot\resources;laboot\resources cli.py
+pyinstaller --name laboot --windowed --add-binary C:\Users\charles\PycharmProjects\laboot\laboot\resources;laboot\resources cli.py
 
 
 elements to search for on config page:

@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
 
         self.set_dialog = SetDialog(self)
+        self.set_dialog.signals.newSerialNumbers.connect(self._new_set_defined)
         self.set_dialog.finished.connect(self.on_set_dialog_finished)
 
         # self.frame = QFrame(self)
@@ -96,32 +97,23 @@ class MainWindow(QMainWindow):
         header = "shutdown: "
 
         if self._discard_test_results():
-            self.logger.info("shutdown in process...")
+            self.logger.info("shutdown in progress...")
 
             # save ui state
-            self.logger.info(header + "saving ui state")
+            self.logger.info(f"{header} saving ui state")
             self.logger.debug(header +
                               "saving ui/menus/options/autoconfigcollector=" +
                               f"{self.options_auto_config_collector_action.isChecked()}")
+
             settings.setValue("ui/menus/options/autoconfigcollector",
                               str(self.options_auto_config_collector_action.isChecked()))
 
-            self.logger.info(header + "application terminated")
+            self.logger.info(f"{header} application terminated")
             logging.shutdown()
 
             event.accept()
         else:
             event.ignore()
-
-    def dragEnterEvent(self, e):
-        if e.mimeData().hasFormat("FileName"):
-            e.accept()
-        else:
-            e.ignore()
-
-    def dropEvent(self, event):
-        self.logger.info("dropEvent occurred")
-        self.signals.dropped_filename.emit(event.mimeData().urls()[0].toLocalFile())
 
     def _discard_test_results(self, clear_flag=True):
         if self.unsaved_test_results:
@@ -136,6 +128,16 @@ class MainWindow(QMainWindow):
         if clear_flag:
             self.unsaved_test_results = False
         return True
+
+    def dragEnterEvent(self, e):
+        if e.mimeData().hasFormat("FileName"):
+            e.accept()
+        else:
+            e.ignore()
+
+    def dropEvent(self, event):
+        self.logger.info("dropEvent occurred")
+        self.signals.dropped_filename.emit(event.mimeData().urls()[0].toLocalFile())
 
     def on_save_test_results_action_triggered(self):
         spreadsheet.save_test_results(self.spreadsheet_path, self.sensor_log.get_test_results())
@@ -167,17 +169,18 @@ class MainWindow(QMainWindow):
     def on_set_dialog_finished(self, result):
         if result:
             self.logger.info("Manual entry of serial numbers complete.")
-            serial_numbers = self.set_dialog.get_serial_numbers()
-            if any(map(lambda n: int(n), serial_numbers)):
-                self._add_sensors_to_list(self.set_dialog.get_serial_numbers())
 
-                self.config_collector_action.setEnabled(True)
-
-                # auto configure the collector if applicable
-                if self.set_dialog.configure_collector.isChecked():
-                    self.on_configure_collector_action_triggered()
-
-            self.unsaved_test_results = False
+            # serial_numbers = self.set_dialog.get_serial_numbers()
+            # if any(map(lambda n: int(n), serial_numbers)):
+            #     self._add_sensors_to_list(self.set_dialog.get_serial_numbers())
+            #
+            #     self.config_collector_action.setEnabled(True)
+            #
+            #     # auto configure the collector if applicable
+            #     if self.set_dialog.configure_collector.isChecked():
+            #         self.on_configure_collector_action_triggered()
+            #
+            # self.unsaved_test_results = False
         else:
             self.logger.info("Manual entry of serial numbers cancelled.")
 
@@ -363,6 +366,19 @@ class MainWindow(QMainWindow):
     def _import_serial_numbers_from_spreadsheet(self, filename) -> tuple:
         print(f"importing from dropped_filename: {filename}")
         return spreadsheet.get_serial_numbers(filename)
+
+    def _new_set_defined(self, serial_numbers):
+        if all(map(lambda n: not n.isalpha(), serial_numbers)):
+            if all(map(lambda n: n.isdigit(), serial_numbers)):
+                self._add_sensors_to_list(serial_numbers)
+
+                self.config_collector_action.setEnabled(True)
+
+                # auto configure the collector if applicable
+                if self.set_dialog.configure_collector.isChecked():
+                    self.on_configure_collector_action_triggered()
+
+                self.unsaved_test_results = False
 
     def _process_file_drop(self, filename: str):
         if self._discard_test_results():

@@ -3,10 +3,13 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFormLayout, QVBoxLayout, QLineEdit, QCheckBox, QDialogButtonBox, QDialog
 
+from laboot.signals import DefineSetSignals
+
 
 class SetDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent, flags=Qt.Window)
+        self.signals = DefineSetSignals()
 
         self.setWindowTitle("Define Set")
         self.dialog_layout = QVBoxLayout()
@@ -36,6 +39,10 @@ class SetDialog(QDialog):
 
         self.setLayout(self.dialog_layout)
 
+    def accept(self):
+        super().accept()
+        self.signals.newSerialNumbers.emit(self._get_serial_numbers())
+
     def showEvent(self, QShowEvent):
         super().showEvent(QShowEvent)
         for line_edit in self.line_edits:
@@ -44,7 +51,7 @@ class SetDialog(QDialog):
         # make sure carrot is in first sensor field
         self.line_edits[0].setFocus()
 
-    def get_serial_numbers(self) -> tuple:
+    def _get_serial_numbers(self) -> tuple:
         """Returns sensor serial numbers.
 
         Returns

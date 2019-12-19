@@ -17,3 +17,7 @@ class DropSignals(QObject):
 class CollectorSignals(QObject):
     offline = pyqtSignal(str)
     configured = pyqtSignal()
+
+
+class DefineSetSignals(QObject):
+    newSerialNumbers = pyqtSignal(tuple)
