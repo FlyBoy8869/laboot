@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(dialog_title())
         self.setCentralWidget(self.frame)
+        self.setWindowIcon(QIcon(r"laboot/resources/images/app_128.png"))
         self.resize(500, 360)
         self.show()
 
