@@ -24,7 +24,7 @@ from laboot.utilities import sound
 lab_settings.load()
 lab_logging.initialize()
 
-snd_passed = QSound(r"laboot\resources\audio\Alerter 11.wav")
+snd_passed = QSound(r"laboot\resources\audio\cash_register.wav")
 snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 

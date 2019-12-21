@@ -9,7 +9,7 @@ main/admin_password=FMIadm!n
 
 # time in seconds
 main/request_timeout=2
-main/test_time=1500
+main/test_time=12
 main/link_check_time=10
 
 # time in milli-seconds
