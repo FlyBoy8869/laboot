@@ -30,7 +30,7 @@ snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 # version that shows in help dialog
 def version():
-    return '0.1.5'
+    return '0.1.6'
 
 
 def dialog_title():
