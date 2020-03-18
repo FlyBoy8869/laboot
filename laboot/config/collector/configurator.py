@@ -1,14 +1,15 @@
 # collector.py
 import logging
 from collections import namedtuple
+from time import sleep
 from typing import Tuple
 
 from PyQt5.QtCore import QSettings
 from selenium import webdriver
 
-from laboot.config.dom.constants import (_serial_number_elements, _correction_angle_elements,
-                                         _voltage_ride_through,
-                                         _password_element, _save_config_element)
+from laboot.config.dom.constants import (serial_number_elements, correction_angle_elements,
+                                         voltage_ride_through,
+                                         password_element, save_config_element)
 
 ConfigurationResult = namedtuple("ConfigurationResult", "result exc message")
 
@@ -42,19 +43,19 @@ class Configurator:
         self.browser.find_element_by_xpath("//input[@name='frequency'][@value='60']").click()
 
     def _find_serial_input_elements(self):
-        return self._find_elements_by_name(_serial_number_elements)
+        return self._find_elements_by_name(serial_number_elements)
 
     def _find_angle_elements(self):
-        return self._find_elements_by_name(_correction_angle_elements)
+        return self._find_elements_by_name(correction_angle_elements)
 
     def _find_password_element(self):
-        return self.browser.find_element_by_name(_password_element)
+        return self.browser.find_element_by_name(password_element)
 
     def _find_save_config_button(self):
-        return self.browser.find_element_by_id(_save_config_element)
+        return self.browser.find_element_by_id(save_config_element)
 
     def _find_voltage_ride_through_element(self):
-        return self.browser.find_element_by_id(_voltage_ride_through)
+        return self.browser.find_element_by_id(voltage_ride_through)
 
     def _find_elements_by_name(self, elements: Tuple):
         """Finds elements by name."""
@@ -86,7 +87,4 @@ class Configurator:
         self._enter_password()
         self._save_changes()
 
-# TODO: Will have to account for the times when the administration pages rears it's head
-# TODO: Need to implement exception handling
-#       - program crashes with a url that can't be reached, found, etc. in configure()
-#           - Fixed: now check browser.page_source for presence of "offline", if present return
+        sleep(1)

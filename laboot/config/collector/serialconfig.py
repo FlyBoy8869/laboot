@@ -1,6 +1,7 @@
 # collector.py
 import logging
 from collections import namedtuple
+from time import sleep
 from typing import List, Callable, Tuple
 
 from PyQt5.QtCore import QSettings

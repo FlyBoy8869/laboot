@@ -25,7 +25,7 @@ class SearchDom:
 
     @staticmethod
     def for_sixty_hz_radio_button_element(webdriver):
-        return webdriver.find_element_by_xpath("//input[@name='frequency'][@value='60']")
+        return webdriver.find_element_by_xpath(sixty_hertz)
 
     @staticmethod
     def _find_elements_by_name(webdriver, elements):

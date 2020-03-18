@@ -1,6 +1,7 @@
 # __main__.py
 import logging
 import sys
+from time import sleep
 
 from PyQt5.QtCore import Qt, QTimer, QSettings
 from PyQt5.QtGui import QFont, QBrush, QColor, QPixmap, QIcon, QCloseEvent
@@ -218,8 +219,8 @@ class MainWindow(QMainWindow):
         self.logger.info("Adding sensors to lists.")
         self.logger.debug(f"Adding the following serial numbers: {serial_numbers}")
 
-        self.qlwSensors.clear()  # start fresh
-        self.sensor_log.clear()  # start fresh
+        self.qlwSensors.clear()
+        self.sensor_log.clear()
 
         for index, serial_number in enumerate(serial_numbers):
             # make sure only sensors under test are added to list widget
@@ -333,11 +334,13 @@ class MainWindow(QMainWindow):
     def _close_browser(self):
         if self.browser:
             self.browser.quit()
+            self.browser = None
 
     def _collector_configured(self):
         self.config_collector_action.setEnabled(False)
         self.collector_configured = True
 
+        sleep(2)
         self._close_browser()
 
         icon = QPixmap(r"laboot\resources\images\info_72.png")
@@ -391,6 +394,8 @@ class MainWindow(QMainWindow):
             if self.options_auto_config_collector_action.isChecked():
                 QTimer(self).singleShot(1000, self.on_configure_collector_action_triggered)
                 self.logger.info("Automatically configured collector.")
+
+            self.config_collector_action.setEnabled(True)
 
     def _submit_item_for_testing(self, serial_number):
         settings = QSettings()

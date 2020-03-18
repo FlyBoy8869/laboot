@@ -26,3 +26,6 @@ frequency = "frequency"
 # Use find_element_by_id
 save_config_element = "saveconfig"
 voltage_ride_through = "singlephase"
+
+# Use find_element_by_xpath
+sixty_hertz = "//input[@name='frequency'][@value='60']"
