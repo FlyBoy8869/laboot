@@ -156,6 +156,9 @@ class FiveAmpTestDialog(QDialog):
         if self.test_time_remaining <= 0:
             self._test_time_has_run_out()
 
+        self.lbl_remaining_time_header.setText(
+            f"Test time remaining: {utilities_time.format_seconds_to_minutes_seconds(self.test_time_remaining)}")
+
     def _kill_timers(self):
         if self.status_timer.isActive():
             self.status_timer.stop()
