@@ -76,14 +76,6 @@ class WaitForTextOnPage(QDialog):
         self.lbl_separator = QLabel("_" * 50)
         self.lbl_separator.setAlignment(Qt.AlignHCenter)
 
-        # self.pb_counter = QProgressBar(self)
-        # self.pb_counter.installEventFilter(self)
-        # self.pb_counter.setTextVisible(False)
-        # self.pb_counter.setRange(0, self.wait_time)
-        # self.pb_counter.setMinimum(0)
-        # self.pb_counter.setMaximum(self.wait_time)
-        # self.pb_counter.setValue(self.wait_time)
-
         btns = QDialogButtonBox()
         btns.setStandardButtons(QDialogButtonBox.Cancel)
         btns.rejected.connect(lambda: self.done(WaitForTextOnPage.REJECTED))
@@ -98,11 +90,7 @@ class WaitForTextOnPage(QDialog):
 
         self.main_layout.addWidget(self.lbl_separator, Qt.AlignCenter)
 
-        # self.frame_layout.addWidget(self.pb_counter, Qt.AlignCenter)
         self.main_layout.addWidget(btns)
-
-        # self.count_down_timer = QTimer(self)
-        # self.count_down_timer.timeout.connect(lambda: self.pb_counter.setValue(self.pb_counter.value() - 1))
 
         self.check_page_timer = QTimer(self)
         self.check_page_timer.timeout.connect(self._check_page)
@@ -113,30 +101,22 @@ class WaitForTextOnPage(QDialog):
         self.open()
         self.is_running = True
         self.movie_hourglass.start()
-        # self.count_down_timer.start(1000)
         self.check_page_timer.start(self.check_interval * 1000)
 
         # time to spend waiting for the collector to update
         QTimer(self).singleShot(self.wait_time * 1000, self.stop)
 
     def stop(self):
-        # self.count_down_timer.stop()
         self.check_page_timer.stop()
         self.done(WaitForTextOnPage.WAIT_TIME_EXPIRED)
 
     def _check_page(self):
-        # self.wait_time -= 1
-        # self.check_interval_remaining -= 1
-
-        # if self.check_interval_remaining <= 0:
         in_source: List[str] = self._get_source_as_list(self.url, self.request_timeout)
         if self._find(self.text, in_source):
             self.done(WaitForTextOnPage.ACCEPTED)
 
-        # self.check_interval_remaining = self.check_interval
-
     @staticmethod
-    def _get_source_as_list(url: str, timeout: int = 1) -> List[str]:
+    def _get_source_as_list(url: str, timeout: int = 5) -> List[str]:
         r = requests.get(url, timeout=timeout)
         return r.text.split("\n")
 

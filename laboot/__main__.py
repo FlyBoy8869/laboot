@@ -31,7 +31,7 @@ snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 # version that shows in help dialog
 def version():
-    return '0.1.6'
+    return '0.1.7'
 
 
 def dialog_title():
@@ -102,9 +102,6 @@ class MainWindow(QMainWindow):
 
             # save ui state
             self.logger.info(f"{header} saving ui state")
-            self.logger.debug(header +
-                              "saving ui/menus/options/autoconfigcollector=" +
-                              f"{self.options_auto_config_collector_action.isChecked()}")
 
             settings.setValue("ui/menus/options/autoconfigcollector",
                               str(self.options_auto_config_collector_action.isChecked()))
@@ -170,27 +167,14 @@ class MainWindow(QMainWindow):
     def on_set_dialog_finished(self, result):
         if result:
             self.logger.info("Manual entry of serial numbers complete.")
-
-            # serial_numbers = self.set_dialog.get_serial_numbers()
-            # if any(map(lambda n: int(n), serial_numbers)):
-            #     self._add_sensors_to_list(self.set_dialog.get_serial_numbers())
-            #
-            #     self.config_collector_action.setEnabled(True)
-            #
-            #     # auto configure the collector if applicable
-            #     if self.set_dialog.configure_collector.isChecked():
-            #         self.on_configure_collector_action_triggered()
-            #
-            # self.unsaved_test_results = False
         else:
             self.logger.info("Manual entry of serial numbers cancelled.")
 
         self.logger.debug(f"set_dialog configure collector: {self.set_dialog.configure_collector.isChecked()}")
 
     def on_save_action_triggered(self):
-        if self.spreadsheet_path:
-            spreadsheet.save_test_results(self.spreadsheet_path, self.sensor_log.get_test_results())
-            self.unsaved_test_results = False
+        spreadsheet.save_test_results(self.spreadsheet_path, self.sensor_log.get_test_results())
+        self.unsaved_test_results = False
 
     def on_start_five_amp_test_action_triggered(self):
         self._submit_item_for_testing(self.qlwSensors.currentItem().text())
@@ -201,14 +185,14 @@ class MainWindow(QMainWindow):
     def on_test_dialog_finished(self, result):
         if result.result == "Pass":
             sound.play_sound(snd_passed)
-            b = QBrush(QColor(0, 255, 0, 100))
+            brush = QBrush(QColor(0, 255, 0, 100))
         else:
             sound.play_sound(snd_failed)
-            b = QBrush(QColor(255, 0, 0, 100))
+            brush = QBrush(QColor(255, 0, 0, 100))
 
         self.unsaved_test_results = True
 
-        self.qlwSensors.currentItem().setBackground(b)
+        self.qlwSensors.currentItem().setBackground(brush)
         self.test_results.append(result)
 
         self.save_results_action.setEnabled(True)
@@ -396,6 +380,7 @@ class MainWindow(QMainWindow):
                 self.logger.info("Automatically configured collector.")
 
             self.config_collector_action.setEnabled(True)
+            self.collector_configured = False
 
     def _submit_item_for_testing(self, serial_number):
         settings = QSettings()
