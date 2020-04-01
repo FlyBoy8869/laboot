@@ -1,8 +1,8 @@
-#pages/configuration=http://192.168.2.1/index.php/main/configuration
-pages/configuration=http://127.0.0.1:8080/LineWatch-M Website configuration.html
+pages/configuration=http://192.168.2.1/index.php/main/configuration
+#pages/configuration=http://127.0.0.1:8080/LineWatch-M Website configuration.html
 
-#pages/modem_status=http://192.168.2.1/index.php/main/modem_status
-pages/modem_status=http://127.0.0.1:8080/LineWatch-M Website modem status.html
+pages/modem_status=http://192.168.2.1/index.php/main/modem_status
+#pages/modem_status=http://127.0.0.1:8080/LineWatch-M Website modem status.html
 
 main/config_password=Q854Xj8X
 main/admin_user=administrator
@@ -10,7 +10,7 @@ main/admin_password=FMIadm!n
 
 # time in seconds
 main/request_timeout=10
-main/test_time=150
+main/test_time=1500
 main/link_check_time=10
 
 # time in milli-seconds

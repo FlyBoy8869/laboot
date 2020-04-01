@@ -2,13 +2,15 @@
 import logging
 import sys
 from time import sleep
+from typing import Tuple
 
-from PyQt5.QtCore import Qt, QTimer, QSettings
+from PyQt5.QtCore import Qt, QTimer, QSettings, QSize
 from PyQt5.QtGui import QFont, QBrush, QColor, QPixmap, QIcon, QCloseEvent
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout,
                              QListWidget, QListWidgetItem, QLabel,
-                             QHBoxLayout, QMessageBox, QAction, QStatusBar, QToolBar, QWidget)
+                             QHBoxLayout, QMessageBox, QAction, QStatusBar, QToolBar, QWidget, QAbstractScrollArea,
+                             QSizePolicy)
 from selenium import webdriver
 
 from laboot import spreadsheet
@@ -31,7 +33,7 @@ snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 # version that shows in help dialog
 def version():
-    return '0.1.7'
+    return '0.1.8'
 
 
 def dialog_title():
@@ -39,8 +41,8 @@ def dialog_title():
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent, flags=Qt.Window)
+    def __init__(self, *args, parent=None, **kwargs):
+        super().__init__(parent, *args, flags=Qt.Window, **kwargs)
 
         self.logger = logging.getLogger(__name__)
         self.setAcceptDrops(True)
@@ -90,7 +92,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(dialog_title())
         self.setCentralWidget(self.frame)
         self.setWindowIcon(QIcon(r"laboot/resources/images/app_128.png"))
-        self.resize(500, 360)
+        self.resize(500, 550)
         self.show()
 
     def closeEvent(self, event: QCloseEvent):
@@ -112,20 +114,6 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
-
-    def _discard_test_results(self, clear_flag=True):
-        if self.unsaved_test_results:
-            result = QMessageBox.question(self, f"{dialog_title()} - Unsaved Test Results",
-                                          "Discard results?\t\t\t\t",
-                                          QMessageBox.Yes | QMessageBox.No,
-                                          QMessageBox.No)
-
-            if result == QMessageBox.No:
-                return False
-
-        if clear_flag:
-            self.unsaved_test_results = False
-        return True
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat("FileName"):
@@ -199,21 +187,26 @@ class MainWindow(QMainWindow):
 
         self.sensor_log.set_test_result(result.serial_number, result.result)
 
-    def _add_sensors_to_list(self, serial_numbers):
+    def _add_sensors_to_list(self, serial_numbers: Tuple[spreadsheet.SerialNumberInfo]):
         self.logger.info("Adding sensors to lists.")
         self.logger.debug(f"Adding the following serial numbers: {serial_numbers}")
 
         self.qlwSensors.clear()
         self.sensor_log.clear()
 
-        for index, serial_number in enumerate(serial_numbers):
+        for serial_info in serial_numbers:
             # make sure only sensors under test are added to list widget
-            if serial_number != "0":
-                item = QListWidgetItem(serial_number)
+            if serial_info.serial_number != "0":
+                item = QListWidgetItem(serial_info.serial_number)
+
+                if serial_info.failure:
+                    brush = QBrush(QColor(Qt.yellow))
+                    item.setBackground(brush)
+
                 self.qlwSensors.addItem(item)
 
             # but unused line positions must be added to the log in order to properly configure the collector
-            self.sensor_log.append(Sensor(index, serial_number))
+            self.sensor_log.append(Sensor(serial_info.position, serial_info.serial_number))
 
         self.logger.debug(f"sensor_log contains {self.sensor_log.count()} records.")
 
@@ -342,6 +335,20 @@ class MainWindow(QMainWindow):
         msg_box = QMessageBox(QMessageBox.Information, "Low Amp Boot", message, QMessageBox.Ok)
         msg_box.exec_()
 
+    def _discard_test_results(self, clear_flag=True):
+        if self.unsaved_test_results:
+            result = QMessageBox.question(self, f"{dialog_title()} - Unsaved Test Results",
+                                          "Discard results?\t\t\t\t",
+                                          QMessageBox.Yes | QMessageBox.No,
+                                          QMessageBox.No)
+
+            if result == QMessageBox.No:
+                return False
+
+        if clear_flag:
+            self.unsaved_test_results = False
+        return True
+
     def _get_browser(self):
         settings = QSettings()
 
@@ -350,7 +357,7 @@ class MainWindow(QMainWindow):
 
         return self.browser
 
-    def _import_serial_numbers_from_spreadsheet(self, filename) -> tuple:
+    def _import_serial_numbers_from_spreadsheet(self, filename) -> Tuple[spreadsheet.SerialNumberInfo]:
         print(f"importing from dropped_filename: {filename}")
         return spreadsheet.get_serial_numbers(filename)
 
