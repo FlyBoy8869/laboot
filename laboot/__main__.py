@@ -33,7 +33,7 @@ snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 # version that shows in help dialog
 def version():
-    return '0.1.8'
+    return '0.1.9'
 
 
 def dialog_title():
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
                 self.qlwSensors.addItem(item)
 
             # but unused line positions must be added to the log in order to properly configure the collector
-            self.sensor_log.append(Sensor(serial_info.position, serial_info.serial_number))
+            self.sensor_log.append(Sensor(serial_info.position, serial_info.serial_number, serial_info.failure))
 
         self.logger.debug(f"sensor_log contains {self.sensor_log.count()} records.")
 
@@ -396,6 +396,15 @@ class MainWindow(QMainWindow):
 
         if self.collector_configured:
             if not self.sensor_log.is_tested(serial_number):
+
+                if self.sensor_log.get_sensor(serial_number).failure:
+                    result = QMessageBox.information(QMessageBox(), f"LWTest - Sensor {serial_number}",
+                                                     "Sensor failed prior testing.\nAre you sure?",
+                                                     QMessageBox.Yes | QMessageBox.Cancel)
+
+                    if result == QMessageBox.Cancel:
+                        return
+
                 self.logger.debug(f"Using url to check link status: {settings.value('pages/modem_status')}")
                 td = FiveAmpTestDialog(serial_number,
                                        FromWebSiteStrategy(serial_number, settings.value("pages/modem_status")),

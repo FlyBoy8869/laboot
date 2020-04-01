@@ -3,11 +3,16 @@ from typing import Optional
 
 
 class Sensor:
-    def __init__(self, line_position, serial_number):
+    def __init__(self, line_position, serial_number, prior_failure: bool = False):
         self.test_position = line_position
         self.serial_number = serial_number
+        self._prior_failure = prior_failure
         self.tested = False
         self.result = "Not Tested"
+
+    @property
+    def failure(self) -> bool:
+        return self._prior_failure
 
 
 class SensorLog:
@@ -22,6 +27,9 @@ class SensorLog:
 
     def count(self):
         return len(self.log)
+
+    def get_sensor(self, serial_number: str):
+        return self._find_sensor_by_serial_number(serial_number)
 
     def get_serial_numbers(self) -> tuple:
         return tuple([sensor.serial_number for sensor in self.log.values()])
