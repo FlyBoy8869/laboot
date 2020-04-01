@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
         self.qlwSensors = QListWidget()
         self.qlwSensors.setFont(font)
         self.qlwSensors.itemDoubleClicked.connect(self.on_sensor_item_double_clicked)
-        self.qlwSensors.itemClicked.connect(lambda i: self.start_five_amp_action.setEnabled(True))
+        # self.qlwSensors.itemClicked.connect(lambda i: self.start_five_amp_action.setEnabled(True))
 
         # add widgets to layout
         self.left_layout.addWidget(self.lbl_sensors, alignment=Qt.AlignLeft)
@@ -316,8 +316,9 @@ class MainWindow(QMainWindow):
             self.browser = None
 
     def _collector_configured(self):
-        self.config_collector_action.setEnabled(False)
+        # self.config_collector_action.setEnabled(False)
         self.collector_configured = True
+        self.start_five_amp_action.setEnabled(True)
 
         sleep(2)
         self._close_browser()
