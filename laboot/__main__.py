@@ -221,22 +221,21 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         # create top level menus
-        self.menu = self.menuBar().addMenu("&Menu")
         self.menu_options = self.menuBar().addMenu("&Options")
         self.menu_help = self.menuBar().addMenu("&Help")
 
         # ----- create actions -----
         self.define_set_action = QAction(QIcon(r"laboot\resources\images\menu_icons\set-02_128.png"),
-                                         "Define Set", self)
+                                         "", self)
         self.config_collector_action = QAction(QIcon(r"laboot\resources\images\menu_icons\config-02_128.png"),
-                                               "Configure Collector with  Serial Numbers", self)
+                                               "", self)
         self.save_results_action = QAction(QIcon(r"laboot\resources\images\menu_icons\save-01_48.png"),
-                                           "Save results", self)
-        self.exit_action = QAction(QIcon(r"laboot\resources\images\menu_icons\exit-01_128.png"), "E&xit", self)
+                                           "", self)
+        self.exit_action = QAction(QIcon(r"laboot\resources\images\menu_icons\exit-01_128.png"), "", self)
 
         # menu_tasks actions
         self.start_five_amp_action = QAction(QIcon(r"laboot\resources\images\menu_icons\bolt-01_48.png"),
-                                             "Start 5amp test...", self)
+                                             "", self)
 
         # menu_options actions
         self.options_auto_config_collector_action = QAction("Auto Configure Collector", self)
@@ -249,9 +248,16 @@ class MainWindow(QMainWindow):
 
         # menu
         self.define_set_action.setStatusTip("Manually enter serial numbers.")
+
         self.config_collector_action.setEnabled(True)
+        self.config_collector_action.setStatusTip("Configures collector with serial numbers.")
+
         self.start_five_amp_action.setEnabled(False)
+        self.start_five_amp_action.setStatusTip("Start 5 Amp test.")
+
         self.save_results_action.setEnabled(False)
+        self.save_results_action.setStatusTip("Save test results.")
+
         self.exit_action.setStatusTip("Exit the application.")
 
         # menu_options
@@ -285,11 +291,7 @@ class MainWindow(QMainWindow):
 
         self.help_about_action.triggered.connect(self.on_menu_help_about_action_triggered)
 
-        # ----- add to menu -----
-
-        # menu
-        self.menu.addSeparator()
-        self.menu.addAction(self.exit_action)
+        # ----- add to menus -----
 
         # menu_optons
         self.menu_options.addAction(self.options_auto_config_collector_action)
@@ -399,7 +401,7 @@ class MainWindow(QMainWindow):
 
                 if self.sensor_log.get_sensor(serial_number).failure:
                     result = QMessageBox.information(QMessageBox(), f"LWTest - Sensor {serial_number}",
-                                                     "Sensor failed prior testing.\nAre you sure?",
+                                                     "Sensor failed other sections of testing.\nAre you sure?",
                                                      QMessageBox.Yes | QMessageBox.Cancel)
 
                     if result == QMessageBox.Cancel:
