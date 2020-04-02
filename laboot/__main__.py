@@ -33,7 +33,7 @@ snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 # version that shows in help dialog
 def version():
-    return '0.1.9'
+    return '0.1.10'
 
 
 def dialog_title():
@@ -147,9 +147,9 @@ class MainWindow(QMainWindow):
         text = "<center>" \
                f"<h1>{dialog_title()}</h1>" \
                "</center" \
-               f"<p>Version {version()}<br/>" \
-               "Author: Charles Cognato<br/>" \
-               "Email: charlescognato@gmail.com</p>"
+               f"<p><h4>Version</h4>{version()}" \
+               "<h4>Author:</h4>Charles Cognato" \
+               "<h4>Email:</h4>charlescognato@gmail.com</p>"
         QMessageBox.about(self, "About", text)
 
     def on_set_dialog_finished(self, result):
@@ -162,6 +162,10 @@ class MainWindow(QMainWindow):
 
     def on_save_action_triggered(self):
         spreadsheet.save_test_results(self.spreadsheet_path, self.sensor_log.get_test_results())
+
+        QMessageBox.information(self, "LWTest - Save Data", "Test data has been saved.",
+                                QMessageBox.Ok)
+
         self.unsaved_test_results = False
 
     def on_start_five_amp_test_action_triggered(self):
@@ -401,9 +405,9 @@ class MainWindow(QMainWindow):
             if not self.sensor_log.is_tested(serial_number):
 
                 if self.sensor_log.get_sensor(serial_number).failure:
-                    result = QMessageBox.information(QMessageBox(), f"LWTest - Sensor {serial_number}",
+                    result = QMessageBox.information(self, f"LWTest - Sensor {serial_number}",
                                                      "Sensor failed other sections of testing.\nAre you sure?",
-                                                     QMessageBox.Yes | QMessageBox.Cancel)
+                                                     QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
 
                     if result == QMessageBox.Cancel:
                         return
