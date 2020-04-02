@@ -1,9 +1,12 @@
 # setdialog.py
+from typing import Tuple
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFormLayout, QVBoxLayout, QLineEdit, QCheckBox, QDialogButtonBox, QDialog
 
 from laboot.signals import DefineSetSignals
+import laboot.spreadsheet as spreadsheet
 
 
 class SetDialog(QDialog):
@@ -51,7 +54,7 @@ class SetDialog(QDialog):
         # make sure carrot is in first sensor field
         self.line_edits[0].setFocus()
 
-    def _get_serial_numbers(self) -> tuple:
+    def _get_serial_numbers(self) -> Tuple[spreadsheet.SerialNumberInfo]:
         """Returns sensor serial numbers.
 
         Returns
@@ -60,7 +63,9 @@ class SetDialog(QDialog):
             a tuple of strings representing sensor serial numbers
         """
 
-        serial_numbers = [line_edit.text() if line_edit.text() else "0" for line_edit in self.line_edits]
+        serial_numbers = [spreadsheet.SerialNumberInfo(line_edit.text(), index, False)
+                          if line_edit.text() else spreadsheet.SerialNumberInfo("0", index, False)
+                          for index, line_edit in enumerate(self.line_edits)]
         print(f"SetDialog.get_serial_numbers() returning: {serial_numbers}")
 
         return tuple(serial_numbers)

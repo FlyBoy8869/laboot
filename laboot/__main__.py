@@ -33,7 +33,7 @@ snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 # version that shows in help dialog
 def version():
-    return '0.1.10'
+    return '0.1.11'
 
 
 def dialog_title():
@@ -369,8 +369,8 @@ class MainWindow(QMainWindow):
         return spreadsheet.get_serial_numbers(filename)
 
     def _new_set_defined(self, serial_numbers):
-        if all(map(lambda n: not n.isalpha(), serial_numbers)):
-            if all(map(lambda n: n.isdigit(), serial_numbers)):
+        if all(map(lambda n: not n.serial_number.isalpha(), serial_numbers)):
+            if all(map(lambda n: n.serial_number.isdigit(), serial_numbers)):
                 self._add_sensors_to_list(serial_numbers)
 
                 self.config_collector_action.setEnabled(True)
