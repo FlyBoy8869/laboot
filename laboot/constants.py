@@ -1,4 +1,7 @@
 # constants.py
+from PyQt5.QtCore import QSettings
+
+print(f"constants: debugging enabled {QSettings().value('DEBUG')}")
 
 TEMPERATURE_REFERENCE = 'C17'
 
@@ -85,3 +88,18 @@ PERSISTENCE_RESULTS = (SENSOR_1_PERSISTENCE_RESULT, SENSOR_2_PERSISTENCE_RESULT,
 
 ALL_RESULTS = (RSSI_RESULTS, REPORTING_RESULTS, RAW_CONFIG_RESULTS, HIGH_VOLTAGE_RESULTS, LOW_VOLTAGE_RESULTS,
                CALIBRATIONS_RESULTS, PERSISTENCE_RESULTS, FAULT_CURRENT_RESULTS, TEMPERATURE_RESULTS)
+
+if QSettings().value('DEBUG') == 'true':
+    URL_CONFIGURATION = "http://127.0.0.1:8080/LineWatch-M Website configuration.html"
+    URL_MODEM_STATUS = "http://127.0.0.1:8080/LineWatch-M Website modem status.html"
+
+    REQUEST_TIMEOUT = 10
+    TEST_TIME = 60
+    LINK_CHECK_TIME = 10
+else:
+    URL_CONFIGURATION = "http://192.168.2.1/index.php/main/configuration"
+    URL_MODEM_STATUS = "http://192.168.2.1/index.php/main/modem_status"
+
+    REQUEST_TIMEOUT = 10
+    TEST_TIME = 1500
+    LINK_CHECK_TIME = 10

@@ -3,7 +3,7 @@
 - start test
 - start a 25 minute timer
 - while timer not expired
-    - load modem status web page
+    - load_from_config_file modem status web page
     - get source for page
     - scan source for serial number
     - if found

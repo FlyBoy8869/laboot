@@ -1,3 +1,10 @@
-0.1.8 - Failed units are now identified when presented in the list.
-0.1.5 - Start of this file.
+0.1.14 - In reference to update 0.1.13, resuming test time now accounts for idle time before the test is resumed.
 
+0.1.13 - If a sensors test is interrupted or cancelled, the remaining test time is recorded in the sensor object.
+When the sensor is re-submitted for testing the time will resume from where it left off.
+
+0.1.12 - Added support for a command line DEBUG flag
+
+0.1.8 - Failed units are now identified when presented in the list.
+
+0.1.5 - Start of this file.

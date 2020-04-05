@@ -87,7 +87,7 @@
       }
    }
 }
-[1573863494.839][INFO]: Launching chrome: "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-background-networking --disable-client-side-phishing-detection --disable-default-apps --disable-hang-monitor --disable-popup-blocking --disable-prompt-on-repost --disable-sync --enable-automation --enable-blink-features=ShadowDOMV0 --enable-logging --force-fieldtrials --ignore-certificate-errors --load-extension="C:\Users\charl\AppData\Local\Temp\scoped_dir14296_121240341\internal" --log-level=0 --no-first-run --password-store=basic --remote-debugging-port=0 --test-type=webdriver --use-mock-keychain --user-data-dir="C:\Users\charl\AppData\Local\Temp\scoped_dir14296_2095101939" data:,
+[1573863494.839][INFO]: Launching chrome: "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-background-networking --disable-client-side-phishing-detection --disable-default-apps --disable-hang-monitor --disable-popup-blocking --disable-prompt-on-repost --disable-sync --enable-automation --enable-blink-features=ShadowDOMV0 --enable-logging --force-fieldtrials --ignore-certificate-errors --load_from_config_file-extension="C:\Users\charl\AppData\Local\Temp\scoped_dir14296_121240341\internal" --log-level=0 --no-first-run --password-store=basic --remote-debugging-port=0 --test-type=webdriver --use-mock-keychain --user-data-dir="C:\Users\charl\AppData\Local\Temp\scoped_dir14296_2095101939" data:,
 [1573863495.821][INFO]: resolved localhost to ["::1","127.0.0.1"]
 [1573863497.780][WARNING]: Timed out connecting to Chrome, retrying...
 [1573863497.782][INFO]: resolved localhost to ["::1","127.0.0.1"]

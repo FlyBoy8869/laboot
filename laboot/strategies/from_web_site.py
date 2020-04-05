@@ -4,6 +4,7 @@ import logging
 import requests
 from PyQt5.QtCore import QSettings
 
+from laboot import constants
 from laboot.strategies.strategy import BaseStrategy, RequestResults
 from laboot.strategies.strategy import STATUS_ITEM_CONNECTED, STATUS_ITEM_NOT_CONNECTED, STATUS_ITEM_NOT_PRESENT, \
     STATUS_REQUEST_TIMED_OUT
@@ -33,10 +34,9 @@ class FromWebSiteStrategy(BaseStrategy):
         # but instead chooses to "eat" them.
         #
         # Change with caution, if at all.
-        settings = QSettings()
 
         try:
-            r = requests.get(url, timeout=int(settings.value("main/request_timeout")))
+            r = requests.get(url, timeout=constants.REQUEST_TIMEOUT)
             for line in r.text.split("\n"):
                 # TODO: figure out how to handle special characters like TM or Trade Mark
                 # self.logger.debug(f"Retrieved line from website: {line}")

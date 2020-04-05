@@ -1,38 +1,39 @@
 # five_amp_test_dialog.py
 import logging
 from collections import namedtuple
+from datetime import datetime
 
 from PyQt5.QtCore import QSettings, QTimer, QEvent, Qt
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QLineEdit, QDialogButtonBox, QMessageBox
 
 import laboot.strategies.strategy
-from laboot import strategies
-from laboot.config.collector.support import WaitForTextOnPage
+from laboot import constants
+from laboot.sensor import Sensor
 from laboot.signals import TestSignals
 from laboot.utilities import time as utilities_time
-from laboot.utilities.time import format_seconds_to_minutes_seconds
+from laboot.utilities.time import TestTimeRecord
 
 TestResult = namedtuple("TestResult", "serial_number result")
 
 
 class FiveAmpTestDialog(QDialog):
-    def __init__(self, serial_number, strategy, parent=None):
+    def __init__(self, sensor: Sensor, strategy, parent=None):
         super().__init__(parent)
 
         self.logger = logging.getLogger(__name__)
-        settings = QSettings()
 
-        self.serial_number = serial_number
+        self._sensor = sensor
+        self.serial_number = sensor.serial_number
         self.strategy = strategy
         self.signals = TestSignals()
 
         self.collector_configured = True
         self.verification_running = False
 
-        self.link_timer_interval = int(settings.value("main/link_check_time"))
+        self.link_timer_interval = constants.LINK_CHECK_TIME
         self.link_timer_count_down = self.link_timer_interval
-        self.test_timer_interval = int(settings.value("main/test_time"))
+        self.test_timer_interval = sensor.test_time_record.test_time
         self.test_time_remaining = self.test_timer_interval
 
         self.dialog_layout = QVBoxLayout()
@@ -80,7 +81,7 @@ class FiveAmpTestDialog(QDialog):
         self.dialog_layout.addWidget(btns)
 
         self.setLayout(self.dialog_layout)
-        self.setWindowTitle(f"Testing Sensor: {serial_number}")
+        self.setWindowTitle(f"Testing Sensor: {sensor.serial_number}")
 
         # update status every second
         self.status_timer = QTimer(self)
@@ -92,7 +93,8 @@ class FiveAmpTestDialog(QDialog):
     def _test_time_has_run_out(self):
         self.logger.info("Test time has expired. No connection detected.")
         self.signals.testFailed.emit(TestResult(self.serial_number, "Fail"))
-        self.done(QDialog.Rejected)
+        # self.done(QDialog.Rejected)
+        self.reject()
 
     def onStatusTimerTimeout(self):
         self.logger.debug("Status timer has timed out.")
@@ -146,7 +148,7 @@ class FiveAmpTestDialog(QDialog):
         result = self.strategy.check_link_status()
         # if result.status == laboot.strategies.strategy.STATUS_ITEM_CONNECTED:
         #     self.logger.info("Sensor connected to collector.")
-        #     self.signals.testPassed.emit(TestResult(self.serial_number, "Pass"))
+        #     self.signals.testPassed.emit(TestResult(self.sensor, "Pass"))
         #     self.done(QDialog.Accepted)
         # elif result.status == laboot.strategies.strategy.STATUS_REQUEST_TIMED_OUT:
         #     QMessageBox.warning(self, "Low Amperage Boot", result.message, QMessageBox.Ok)
@@ -175,6 +177,7 @@ class FiveAmpTestDialog(QDialog):
 
     def done(self, status):
         if status == QDialog.Rejected:
+            self._sensor.set_test_time(TestTimeRecord(self.test_time_remaining, datetime.now()))
             self.logger.info("Test run cancelled.")
 
         self._kill_timers()

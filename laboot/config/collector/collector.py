@@ -9,14 +9,13 @@ from laboot.signals import CollectorSignals
 
 
 class CollectorConfigurator:
-    def __init__(self, browser):
-        settings = QSettings()
+    def __init__(self, browser, config_url: str, password: str):
         self.logger = logging.getLogger(__name__)
         self.signals = CollectorSignals()
         self.browser = browser
 
-        self.configuration_url = settings.value("pages/configuration")
-        self.config_password = settings.value("main/config_password")
+        self.configuration_url = config_url
+        self.config_password = password
 
     def configure_serial_numbers(self, serial_numbers: tuple):
         self.logger.info("Configuring serial numbers.")

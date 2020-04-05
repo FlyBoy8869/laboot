@@ -87,7 +87,7 @@
       }
    }
 }
-[1576693521.550][INFO]: Launching chrome: "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-background-networking --disable-client-side-phishing-detection --disable-default-apps --disable-hang-monitor --disable-popup-blocking --disable-prompt-on-repost --disable-sync --enable-automation --enable-blink-features=ShadowDOMV0 --enable-logging --force-fieldtrials --ignore-certificate-errors --load-extension="C:\Users\charl\AppData\Local\Temp\scoped_dir10620_119998238\internal" --log-level=0 --no-first-run --password-store=basic --remote-debugging-port=0 --test-type=webdriver --use-mock-keychain --user-data-dir="C:\Users\charl\AppData\Local\Temp\scoped_dir10620_93353306" data:,
+[1576693521.550][INFO]: Launching chrome: "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-background-networking --disable-client-side-phishing-detection --disable-default-apps --disable-hang-monitor --disable-popup-blocking --disable-prompt-on-repost --disable-sync --enable-automation --enable-blink-features=ShadowDOMV0 --enable-logging --force-fieldtrials --ignore-certificate-errors --load_from_config_file-extension="C:\Users\charl\AppData\Local\Temp\scoped_dir10620_119998238\internal" --log-level=0 --no-first-run --password-store=basic --remote-debugging-port=0 --test-type=webdriver --use-mock-keychain --user-data-dir="C:\Users\charl\AppData\Local\Temp\scoped_dir10620_93353306" data:,
 [1576693522.350][WARNING]: This version of ChromeDriver has not been tested with Chrome version 79.
 [1576693522.447][INFO]: resolved localhost to ["::1","127.0.0.1"]
 [1576693524.437][WARNING]: Timed out connecting to Chrome, retrying...
