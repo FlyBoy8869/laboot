@@ -8,7 +8,7 @@ def _get_logging_level_constant(level: str):
     level_constants = {"debug": logging.DEBUG,
                        "info": logging.INFO,
                        "warning": logging.WARNING,
-                       "error": logging.ERROR,
+                       "message": logging.ERROR,
                        "critical": logging.CRITICAL}
 
     return level_constants.get(level, logging.DEBUG)

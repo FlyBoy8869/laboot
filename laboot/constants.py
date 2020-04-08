@@ -94,8 +94,8 @@ if QSettings().value('DEBUG') == 'true':
     URL_MODEM_STATUS = "http://127.0.0.1:8080/LineWatch-M Website modem status.html"
 
     REQUEST_TIMEOUT = 10
-    TEST_TIME = 60
-    LINK_CHECK_TIME = 10
+    TEST_TIME = 10
+    LINK_CHECK_TIME = 3
 else:
     URL_CONFIGURATION = "http://192.168.2.1/index.php/main/configuration"
     URL_MODEM_STATUS = "http://192.168.2.1/index.php/main/modem_status"

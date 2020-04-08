@@ -42,7 +42,7 @@ class SerialConfigurator(Configurator):
         Returns
         -------
             True if the collector was successfully configured.
-            False if an error occurred."""
+            False if an message occurred."""
         logger = logging.getLogger(__name__)
 
         self.browser.get(url)
