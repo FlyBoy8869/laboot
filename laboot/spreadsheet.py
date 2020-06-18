@@ -33,8 +33,17 @@ def get_serial_numbers(file_name: str) -> Result:
 
     Returns
     -------
-        tuple[SerialNumberInfo]
-            a tuple of strings representing sensor serial numbers
+        Result
+            A class representing success or failure, a value if successful or None if not,
+            a message if an error occurred, and the exception if one is thrown.
+
+            For example,
+
+                Result(True, [9800001, 9800002, 9800003], message=None, exception=None)
+
+                or
+
+                Result(False, None, message="Error retrieving serial numbers.", exception=FileNotFoundError())
     """
 
     return _get_serial_numbers_from_worksheet(file_name)
@@ -151,20 +160,3 @@ def _identify_failures(work_sheet: openpyxlWorksheet, serial_numbers) -> Tuple[S
         results.append(SerialNumberInfo(serial_number, index, fails))
 
     return tuple(results)
-
-
-if __name__ == '__main__':
-    # file_name = r"C:\Users\charles\Desktop\ATR-PRD#-SN9802386-SN9802165-SN9802316-SN9802334-SN9802310-SN9802193.xlsm"
-    filename = r"C:\Users\charles\Desktop\MVSS Test Results\01-06-2020\Set 2\ATR-PRD#-SN9802603-SN9802600-SN9802506-SN9802457.xlsm"
-    workbook = _get_workbook(filename)
-    worksheet = _get_worksheet(workbook, 'Sensor(s)')
-
-    sensor_resutls = []
-
-    for p, sserial_number in enumerate(['9800001', '9800002', '9800003', '9800004', '9800005', '9800006']):
-        if _is_failure(worksheet, p):
-            sensor_resutls.append(SerialNumberInfo(sserial_number, p, True))
-
-    print(sensor_resutls)
-
-    workbook.close()

@@ -1,7 +1,6 @@
 import logging
-from datetime import datetime
 from time import sleep
-from typing import Tuple, Optional
+from typing import Tuple, Callable, Optional
 
 from PyQt5.QtCore import Qt, QTimer, QSettings
 from PyQt5.QtGui import QFont, QBrush, QColor, QPixmap, QIcon, QCloseEvent, QCursor
@@ -20,16 +19,12 @@ from laboot.signals import DropSignals
 from laboot.strategies import FromWebSiteStrategy
 from laboot.utilities import sound, time as util_time
 from laboot.utilities.returns import Result
-from laboot.utilities.time import TestTimeRecord
 from laboot.widgets import LabootListWidget
-
-snd_passed = QSound(r"laboot\resources\audio\cash_register.wav")
-snd_failed = QSound(r"laboot\resources\audio\error_01.wav")
 
 
 # version that shows in help dialog
 def version():
-    return '0.1.15'
+    return '0.1.16'
 
 
 def dialog_title():
@@ -37,23 +32,27 @@ def dialog_title():
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, *args, parent=None, **kwargs):
-        super().__init__(parent, *args, flags=Qt.Window, **kwargs)
+    snd_passed = QSound(r"laboot/resources/audio/cash_register.wav")
+    snd_failed = QSound(r"laboot/resources/audio/error_01.wav")
 
-        if QSettings().value('DEBUG') == 'true':
-            print(f"debugging enabled {QSettings().value('DEBUG')}")
-        else:
-            print(f"debugging enabled {QSettings().value('DEBUG')}")
+    green_brush = QBrush(QColor(0, 255, 0, 100))
+    red_brush = QBrush(QColor(255, 0, 0, 100))
+    yellow_brush = QBrush(QColor(Qt.yellow))
+
+    PAUSE_FOR_WEB_SERVER_BROWSER_COMMUNICATION = 5
+
+    def __init__(self, parent=None):
+        super().__init__(parent, flags=Qt.Window)
 
         self.logger = logging.getLogger(__name__)
         self.setAcceptDrops(True)
         self.signals = DropSignals()
         self.signals.dropped_filename.connect(self._process_file_drop)
-        self.unsaved_test_results = False
+        self.need_to_save = False
         self.browser = None
 
         self.spreadsheet_path: str = ""
-        self.sensor_log = SensorLog()
+        self._sensor_log = SensorLog()
         self.collector_configured = False
 
         self.logger.info("Application starting.")
@@ -62,7 +61,6 @@ class MainWindow(QMainWindow):
 
         self.set_dialog = SetDialog(self)
         self.set_dialog.signals.newSerialNumbers.connect(self._new_set_defined)
-        self.set_dialog.finished.connect(self.on_set_dialog_finished)
 
         self.frame = QWidget(self)
         self.frame_layout = QVBoxLayout(self.frame)
@@ -75,14 +73,18 @@ class MainWindow(QMainWindow):
         self.lbl_sensors.setFont(font)
 
         font = QFont("Arial", 16)
-        self.qlwSensors = LabootListWidget()
-        self.qlwSensors.setFont(font)
-        self.qlwSensors.itemDoubleClicked.connect(self.on_sensor_item_double_clicked)
-        self.qlwSensors.signals.item_right_clicked.connect(self.on_sensor_item_right_clicked)
+        self._sensor_view = LabootListWidget()
+        self._sensor_view.setFont(font)
+        self._sensor_view.itemDoubleClicked.connect(self.on_sensor_item_double_clicked)
+        self._sensor_view.signals.item_right_clicked.connect(
+            lambda list_widget_item: self.on_sensor_item_right_clicked(
+                self._sensor_log.get_sensor(list_widget_item.text())
+            )
+        )
 
         # add widgets to layout
         self.left_layout.addWidget(self.lbl_sensors, alignment=Qt.AlignLeft)
-        self.left_layout.addWidget(self.qlwSensors)
+        self.left_layout.addWidget(self._sensor_view)
 
         self.frame_layout.addLayout(self.left_layout)
         self.frame_layout.addLayout(self.button_layout)
@@ -95,55 +97,41 @@ class MainWindow(QMainWindow):
         self.show()
 
     def closeEvent(self, event: QCloseEvent):
-        settings = QSettings()
-        header = "shutdown: "
-
-        if self._discard_test_results():
-            self.logger.info("shutdown in progress...")
-
-            # save ui state
-            self.logger.info(f"{header} saving ui state")
-
-            settings.setValue("ui/menus/options/autoconfigcollector",
-                              str(self.options_auto_config_collector_action.isChecked()))
-
-            self.logger.info(f"{header} application terminated")
+        if self._ok_to_discard_test_results():
+            self._save_ui_state(QSettings())
             logging.shutdown()
-
             event.accept()
         else:
             event.ignore()
 
-    def dragEnterEvent(self, e):
-        if e.mimeData().hasFormat("FileName"):
-            e.accept()
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
         else:
-            e.ignore()
+            event.ignore()
 
     def dropEvent(self, event):
-        self.logger.info("dropEvent occurred")
-        self.signals.dropped_filename.emit(event.mimeData().urls()[0].toLocalFile())
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+            self.signals.dropped_filename.emit(event.mimeData().urls()[0].toLocalFile())
+        else:
+            event.ignore()
 
     def on_save_test_results_action_triggered(self):
-        spreadsheet.save_test_results(self.spreadsheet_path, self.sensor_log.get_test_results())
+        spreadsheet.save_test_results(self.spreadsheet_path, self._sensor_log.get_test_results())
         QMessageBox.information(self, dialog_title(), "Test results saved.", QMessageBox.Ok)
 
-    def on_configure_collector_action_triggered(self):
-        settings = QSettings()
-        config_url = constants.URL_CONFIGURATION
-        password = settings.value('main/config_password')
-
-        if self.qlwSensors.count() != 0:
-            a_collector = collector.CollectorConfigurator(self._get_browser(), config_url, password)
+    def on_configure_collector_action_triggered(self, serial_numbers, password, config_url, get_driver: Callable):
+        if serial_numbers:
+            a_collector = collector.CollectorConfigurator(get_driver(), config_url, password)
             a_collector.signals.configured.connect(self._collector_configured)
-            a_collector.signals.offline.connect(self._collector_config_error)
-
-            self.logger.debug("Asking collector to configure serial numbers.")
-            a_collector.configure_serial_numbers(self.sensor_log.get_serial_numbers())
+            a_collector.signals.offline.connect(self._handle_serial_number_configuration_error)
+            a_collector.configure_serial_numbers(serial_numbers)
 
     def on_define_set_action_triggered(self):
-        if self._discard_test_results(clear_flag=False):
-            self.logger.info("Menu option for manual entry of serial numbers selected.")
+        if self._ok_to_discard_test_results(clear_flag=False):
             self.set_dialog.exec_()
 
     def on_menu_help_about_action_triggered(self):
@@ -155,194 +143,194 @@ class MainWindow(QMainWindow):
                "<h4>Email:</h4>charlescognato@gmail.com</p>"
         QMessageBox.about(self, "About", text)
 
-    def on_set_dialog_finished(self, result):
-        if result:
-            self.logger.info("Manual entry of serial numbers complete.")
-        else:
-            self.logger.info("Manual entry of serial numbers cancelled.")
-
-        self.logger.debug(f"set_dialog configure collector: {self.set_dialog.configure_collector.isChecked()}")
-
     def on_save_action_triggered(self):
-        result = spreadsheet.save_test_results(self.spreadsheet_path, self.sensor_log.get_test_results())
+        if result := spreadsheet.save_test_results(self.spreadsheet_path, self._sensor_log.get_test_results()):
+            self.need_to_save = False
 
-        QMessageBox.information(self, "LWTest - Save Data", result.message,
-                                QMessageBox.Ok)
-
-        if result:
-            self.unsaved_test_results = False
+        QMessageBox.information(self, "LWTest - Save Data", result.message, QMessageBox.Ok)
 
     def on_start_five_amp_test_action_triggered(self):
-        self._submit_item_for_testing(self.qlwSensors.currentItem().text())
+        self._sensor_selected_for_testing(self._sensor_view.currentItem())
 
     def on_sensor_item_double_clicked(self, list_widget_item: QListWidgetItem):
-        self._submit_item_for_testing(list_widget_item.text())
+        self._sensor_selected_for_testing(list_widget_item)
 
-    def on_sensor_item_right_clicked(self, list_widget_item: QListWidgetItem):
-        sensor: Sensor = self.sensor_log.get_sensor(list_widget_item.text())
+    def on_sensor_item_right_clicked(self, sensor: Sensor):
+        if (action := self._get_sensor_context_menu_choice(sensor.remaining_time)) and "reset" in action.text():
+            sensor.test_time_record.reset()
 
-        if not sensor.test_time_record.test_time == constants.TEST_TIME:
-            menu = QMenu(self)
-            menu.addAction(
-                QIcon("laboot/resources/images/menu_icons/refresh.png"),
-                f"reset [remaining time {util_time.format_seconds_to_minutes_seconds(sensor.remaining_time)}]"
-            )
+    def _get_sensor_context_menu_choice(self, remaining_time) -> Optional[QAction]:
+        return self._make_sensor_context_menu(remaining_time).exec(QCursor.pos())
 
-            action: QAction = menu.exec(QCursor.pos())
-            if action and "reset" in action.text():
-                sensor.test_time_record.test_time = constants.TEST_TIME
+    def _make_sensor_context_menu(self, remaining_time):
+        menu = QMenu(self)
+        menu.addAction(
+            QIcon("laboot/resources/images/menu_icons/refresh.png"),
+            f"reset [remaining time {util_time.format_seconds_to_minutes_seconds(remaining_time)}]"
+        )
+        return menu
 
     def on_test_dialog_finished(self, result):
-        if result.result == "Pass":
-            sound.play_sound(snd_passed)
-            brush = QBrush(QColor(0, 255, 0, 100))
-        else:
-            sound.play_sound(snd_failed)
-            brush = QBrush(QColor(255, 0, 0, 100))
+        self._record_sensor_test_result(result)
+        self._indicate_test_result(result)
 
-        self.unsaved_test_results = True
+        self._flag_unsaved_test_results()
+        self._enable_save_action()
 
-        self.qlwSensors.currentItem().setBackground(brush)
-        # self.test_results.append(result)
+    def _record_sensor_test_result(self, result):
+        self._sensor_log.set_test_result(result.serial_number, result.result)
 
+    def _indicate_test_result(self, result):
+        sound.play_sound(self._get_sound_for_test_result(result))
+        self._sensor_view.currentItem().setBackground(self._get_brush_for_test_result(result))
+
+    def _get_sound_for_test_result(self, result):
+        return self.snd_passed if result.result == "Pass" else self.snd_failed
+
+    def _get_brush_for_test_result(self, result):
+        return self.green_brush if result.result == "Pass" else self.red_brush
+
+    def _flag_unsaved_test_results(self):
+        self.need_to_save = True
+
+    def _enable_save_action(self):
         self.save_results_action.setEnabled(True)
 
-        self.sensor_log.set_test_result(result.serial_number, result.result)
-
-    def _add_sensors_to_list(self, serial_numbers: Tuple[spreadsheet.SerialNumberInfo]):
-        self.logger.info("Adding sensors to lists.")
-        self.logger.debug(f"Adding the following serial numbers: {serial_numbers}")
-
-        self.qlwSensors.clear()
-        self.sensor_log.clear()
+    def _add_sensors_to_log(self, serial_numbers: Tuple[spreadsheet.SerialNumberInfo]):
+        self._sensor_log.clear()
 
         for serial_info in serial_numbers:
-            # make sure only sensors under test are added to list widget
-            if serial_info.serial_number != "0":
-                item = QListWidgetItem(serial_info.serial_number)
+            self._sensor_log.append(Sensor(serial_info.position, serial_info.serial_number, serial_info.failure))
 
-                if serial_info.failure:
-                    brush = QBrush(QColor(Qt.yellow))
-                    item.setBackground(brush)
+        self._initialize_list_view_from_sensor_log()
 
-                self.qlwSensors.addItem(item)
+    def _set_item_background_to_yellow_if_failure(self, item, failure):
+        if failure:
+            item.setBackground(self.yellow_brush)
 
-            # but unused line positions must be added to the log in order to properly configure the collector
-            self.sensor_log.append(Sensor(serial_info.position, serial_info.serial_number,
-                                          TestTimeRecord(constants.TEST_TIME, datetime.now()),
-                                          serial_info.failure))
+    def _create_list_widget_item_from_serial_number(self, serial_number):
+        return QListWidgetItem(serial_number)
 
-        self.logger.debug(f"sensor_log contains {self.sensor_log.count()} records.")
+    def _is_valid_serial_number(self, serial_number):
+        return serial_number != "0"
 
-        self.qlwSensors.clearSelection()
+    def _add_serial_number_to_view(self, serial_number, failure):
+        if self._is_valid_serial_number(serial_number):
+            item = self._create_list_widget_item_from_serial_number(serial_number)
+            self._set_item_background_to_yellow_if_failure(item, failure)
+            self._sensor_view.addItem(item)
 
-    def _close_browser(self):
-        if self.browser:
-            self.browser.quit()
-            self.browser = None
+    def _initialize_list_view(self, sensor_log):
+        for sensor in sensor_log:
+            self._add_serial_number_to_view(sensor.serial_number, sensor.failure)
+
+    def _initialize_list_view_from_sensor_log(self):
+        self._sensor_view.clear()
+        self._initialize_list_view(self._sensor_log)
 
     def _collector_configured(self):
-        # self.config_collector_action.setEnabled(False)
+        self._close_browser()
+        self._show_information_message("Serial numbers sent to collector.")
+
         self.collector_configured = True
         self.start_five_amp_action.setEnabled(True)
 
-        sleep(2)
+    def _handle_serial_number_configuration_error(self, message):
         self._close_browser()
+        self._show_information_message(message)
+        self.collector_configuration_action.setEnabled(True)
 
-        icon = QPixmap(r"laboot\resources\images\info_72.png")
-        msgbox = QMessageBox(QMessageBox.NoIcon,
-                             f"{dialog_title()} - Info",
-                             "Serial numbers sent to collector.",
-                             QMessageBox.Ok, self)
-        msgbox.setIconPixmap(icon)
-        msgbox.exec_()
+    def _ask_to_discard_test_results(self, clear_flag):
+        if self._ask_yes_no_question("Discard results?\t\t\t\t") == QMessageBox.No:
+            return False
 
-    def _collector_config_error(self, message):
-        self.config_collector_action.setEnabled(True)
+        self.need_to_save = not clear_flag
 
-        self._close_browser()
-        msg_box = QMessageBox(QMessageBox.Information, "Low Amp Boot", message, QMessageBox.Ok)
-        msg_box.exec_()
-
-    def _discard_test_results(self, clear_flag=True):
-        if self.unsaved_test_results:
-            result = QMessageBox.question(self, f"{dialog_title()} - Unsaved Test Results",
-                                          "Discard results?\t\t\t\t",
-                                          QMessageBox.Yes | QMessageBox.No,
-                                          QMessageBox.No)
-
-            if result == QMessageBox.No:
-                return False
-
-        if clear_flag:
-            self.unsaved_test_results = False
         return True
 
-    def _get_browser(self):
-        settings = QSettings()
+    def _ok_to_discard_test_results(self, clear_flag=True):
+        return not self.need_to_save or self._ask_to_discard_test_results(clear_flag)
 
+    def _close_browser(self):
+        if self.browser:
+            self.browser.minimize_window()
+            sleep(self.PAUSE_FOR_WEB_SERVER_BROWSER_COMMUNICATION)
+            self.browser.quit()
+            self.browser = None
+
+    def _get_browser(self, driver_location: str):
         if self.browser is None:
-            self.browser = webdriver.Chrome(executable_path=settings.value('drivers/chromedriver'))
+            self.browser = webdriver.Chrome(executable_path=driver_location)
 
         return self.browser
 
-    def _import_serial_numbers_from_spreadsheet(self, filename) -> Result:
+    def _get_serial_numbers_from_spreadsheet(self, filename) -> Result:
         print(f"importing from dropped_filename: {filename}")
 
         return spreadsheet.get_serial_numbers(filename)
 
     def _new_set_defined(self, serial_numbers):
-        if all(map(lambda n: not n.serial_number.isalpha(), serial_numbers)):
-            if all(map(lambda n: n.serial_number.isdigit(), serial_numbers)):
-                self._add_sensors_to_list(serial_numbers)
+        if all(map(lambda n: not n.serial_number.isalpha(), serial_numbers)) and \
+         all(map(lambda n: n.serial_number.isdigit(), serial_numbers)):
 
-                self.config_collector_action.setEnabled(True)
+            self._add_sensors_to_log(serial_numbers)
+            self.collector_configuration_action.setEnabled(True)
 
-                # auto configure the collector if applicable
-                if self.set_dialog.configure_collector.isChecked():
-                    self.on_configure_collector_action_triggered()
+            # auto configure the collector if applicable
+            if self.set_dialog.configure_collector.isChecked():
+                self.collector_configuration_action.trigger()
+                self.collector_configured = True
 
-                self.unsaved_test_results = False
+            self.need_to_save = False
 
     def _process_file_drop(self, filename: str):
-        if self._discard_test_results():
+        if self._ok_to_discard_test_results():
             self.spreadsheet_path = filename
 
-            if not (result_serial_numbers := self._import_serial_numbers_from_spreadsheet(filename)):
+            if not (result_serial_numbers := self._get_serial_numbers_from_spreadsheet(filename)):
                 QMessageBox.information(self, dialog_title(), result_serial_numbers.message, QMessageBox.Ok)
                 return
 
-            self._add_sensors_to_list(result_serial_numbers())
+            self._add_sensors_to_log(result_serial_numbers())
+            self.collector_configuration_action.setEnabled(True)
 
-            if self.options_auto_config_collector_action.isChecked():
-                QTimer(self).singleShot(1000, self.on_configure_collector_action_triggered)
+            if self.options_auto_collector_configuration_action.isChecked():
+                QTimer(self).singleShot(1000, self.collector_configuration_action.trigger)
+                self.collector_configured = True
+                return
 
-            self.config_collector_action.setEnabled(True)
             self.collector_configured = False
 
-    def _submit_item_for_testing(self, serial_number):
-        if self.collector_configured:
-            sensor = self.sensor_log.get_sensor(serial_number)
-
-            if not sensor.tested:
-
-                if sensor.failure:
-                    result = QMessageBox.information(self, f"LWTest - Sensor {serial_number}",
-                                                     "Sensor failed previous sections of testing.\nAre you sure?",
-                                                     QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
-
-                    if result == QMessageBox.Cancel:
-                        return
-
-                td = FiveAmpTestDialog(sensor,
-                                       FromWebSiteStrategy(serial_number, constants.URL_MODEM_STATUS),
-                                       parent=self)
-                td.signals.testPassed.connect(self.on_test_dialog_finished)
-                td.signals.testFailed.connect(self.on_test_dialog_finished)
-                td.exec_()
+    def _test_sensor(self, sensor):
+        if not sensor.tested:
+            if sensor.failure and \
+                    self._ask_yes_no_question("Sensor failed previous sections of testing.\nAre you sure?") == \
+                    QMessageBox.No:
+                return
             else:
-                message = f"Sensor {serial_number} has already been tested."
+                message = f"Sensor {sensor.serial_number} has already been tested."
                 QMessageBox.information(self, dialog_title(), message, QMessageBox.Ok)
+
+            td = FiveAmpTestDialog(sensor,
+                                   FromWebSiteStrategy(
+                                       sensor.serial_number,
+                                       constants.URL_MODEM_STATUS
+                                   ),
+                                   parent=self
+                                   )
+            td.signals.testPassed.connect(self.on_test_dialog_finished)
+            td.signals.testFailed.connect(self.on_test_dialog_finished)
+            td.exec_()
+
+    def _check_collector_is_configured(self):
+        if not self.collector_configured:
+            self._show_information_message("The collector must be configured before running any tests.")
+
+    def _sensor_selected_for_testing(self, item: QListWidgetItem):
+        if self.collector_configured:
+            serial_number: str = item.text()
+            sensor: Sensor = self._sensor_log.get_sensor(serial_number)
+            self._test_sensor(sensor)
         else:
             message = "The collector must be configured before running any tests."
             QMessageBox.information(self, dialog_title(), message, QMessageBox.Ok)
@@ -358,32 +346,32 @@ class MainWindow(QMainWindow):
         self.menu_help = self.menuBar().addMenu("&Help")
 
         # ----- create actions -----
-        self.define_set_action = QAction(QIcon(r"laboot\resources\images\menu_icons\set-02_128.png"),
+        self.define_set_action = QAction(QIcon(r"laboot/resources/images/menu_icons/set-02_128.png"),
                                          "", self)
-        self.config_collector_action = QAction(QIcon(r"laboot\resources\images\menu_icons\config-02_128.png"),
+        self.collector_configuration_action = QAction(QIcon(r"laboot/resources/images/menu_icons/config-02_128.png"),
                                                "", self)
-        self.save_results_action = QAction(QIcon(r"laboot\resources\images\menu_icons\save-01_48.png"),
+        self.save_results_action = QAction(QIcon(r"laboot/resources/images/menu_icons/save-01_48.png"),
                                            "", self)
-        self.exit_action = QAction(QIcon(r"laboot\resources\images\menu_icons\exit-01_128.png"), "", self)
+        self.exit_action = QAction(QIcon(r"laboot/resources/images/menu_icons/exit-01_128.png"), "", self)
 
         # menu_tasks actions
-        self.start_five_amp_action = QAction(QIcon(r"laboot\resources\images\menu_icons\bolt-01_48.png"),
+        self.start_five_amp_action = QAction(QIcon(r"laboot/resources/images/menu_icons/bolt-01_48.png"),
                                              "", self)
 
         # menu_options actions
-        self.options_auto_config_collector_action = QAction("Auto Configure Collector", self)
+        self.options_auto_collector_configuration_action = QAction("Auto Configure Collector", self)
         self.options_successive_testing_action = QAction("Successive testing", self)
         self.options_headless_action = QAction("Headless mode", self)
 
-        self.help_about_action = QAction(QIcon(r"laboot\resources\images\menu_icons\info-01_32.png"), "&About", self)
+        self.help_about_action = QAction(QIcon(r"laboot/resources/images/menu_icons/info-01_32.png"), "&About", self)
 
         # ----- configure options -----
 
         # menu
         self.define_set_action.setStatusTip("Manually enter serial numbers.")
 
-        self.config_collector_action.setEnabled(True)
-        self.config_collector_action.setStatusTip("Configures collector with serial numbers.")
+        self.collector_configuration_action.setEnabled(True)
+        self.collector_configuration_action.setStatusTip("Configures collector with serial numbers.")
 
         self.start_five_amp_action.setEnabled(False)
         self.start_five_amp_action.setStatusTip("Start 5 Amp test.")
@@ -394,10 +382,10 @@ class MainWindow(QMainWindow):
         self.exit_action.setStatusTip("Exit the application.")
 
         # menu_options
-        self.options_auto_config_collector_action.setCheckable(True)
+        self.options_auto_collector_configuration_action.setCheckable(True)
         if settings.value("ui/menus/options/autoconfigcollector", "False") == "True":
-            self.options_auto_config_collector_action.setChecked(True)
-        self.options_auto_config_collector_action.setStatusTip(
+            self.options_auto_collector_configuration_action.setChecked(True)
+        self.options_auto_collector_configuration_action.setStatusTip(
             "Automatically configures collector on serial number import.")
 
         self.options_successive_testing_action.setCheckable(True)
@@ -407,7 +395,7 @@ class MainWindow(QMainWindow):
 
         self.options_headless_action.setCheckable(True)
         self.options_headless_action.setChecked(False)
-        self.options_headless_action.setStatusTip("In headless mode, the browser window will not appear.")
+        self.options_headless_action.setStatusTip("In headless mode, the get_driver window will not appear.")
         settings.setValue("ui/menus/options/headless", False)
 
         # menu_help
@@ -415,7 +403,16 @@ class MainWindow(QMainWindow):
 
         # ----- configure triggers -----
         self.define_set_action.triggered.connect(self.on_define_set_action_triggered)
-        self.config_collector_action.triggered.connect(self.on_configure_collector_action_triggered)
+
+        self.collector_configuration_action.triggered.connect(
+            lambda: self.on_configure_collector_action_triggered(self._sensor_log.get_serial_numbers(),
+                                                                 QSettings().value('main/config_password'),
+                                                                 constants.URL_CONFIGURATION,
+                                                                 lambda: self._get_browser(
+                                                                     QSettings().value('drivers/chromedriver')
+                                                                 ))
+        )
+
         self.start_five_amp_action.triggered.connect(self.on_start_five_amp_test_action_triggered)
         self.save_results_action.triggered.connect(self.on_save_action_triggered)
         self.exit_action.triggered.connect(self.close)
@@ -426,8 +423,8 @@ class MainWindow(QMainWindow):
 
         # ----- add to menus -----
 
-        # menu_optons
-        self.menu_options.addAction(self.options_auto_config_collector_action)
+        # menu_options
+        self.menu_options.addAction(self.options_auto_collector_configuration_action)
         self.menu_options.addAction(self.options_successive_testing_action)
         self.menu_options.addAction(self.options_headless_action)
 
@@ -436,9 +433,31 @@ class MainWindow(QMainWindow):
 
         # set up toolbar
         toolbar.addAction(self.define_set_action)
-        toolbar.addAction(self.config_collector_action)
+        toolbar.addAction(self.collector_configuration_action)
         toolbar.addSeparator()
         toolbar.addAction(self.start_five_amp_action)
         toolbar.addSeparator()
         toolbar.addAction(self.save_results_action)
         toolbar.addAction(self.exit_action)
+
+    # PRIVATE INTERFACE METHODS
+
+    def _show_information_message(self, message):
+        icon = QPixmap(r"laboot/resources/images/info_72.png")
+        msg_box = QMessageBox(QMessageBox.NoIcon,
+                              f"{dialog_title()} - Info",
+                              message,
+                              QMessageBox.Ok, self)
+        msg_box.setIconPixmap(icon)
+        msg_box.exec_()
+
+    def _ask_yes_no_question(self, message):
+        return QMessageBox.question(self, f"{dialog_title()}",
+                                    message,
+                                    QMessageBox.Yes | QMessageBox.No,
+                                    QMessageBox.No)
+
+    def _save_ui_state(self, settings_repository):
+        settings_repository.setValue("ui/menus/options/autoconfigcollector",
+                                     str(self.options_auto_collector_configuration_action.isChecked())
+                                     )

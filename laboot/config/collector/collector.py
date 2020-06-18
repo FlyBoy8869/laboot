@@ -38,7 +38,7 @@ class CollectorConfigurator:
 
         func: Callable
             this function will be called with 'dropped_filename' and is responsible
-            for performing the task of configuring the collector i.e., func(dropped_filename)
+            for performing the task of configuring the collector i.event., func(dropped_filename)
         """
 
         # BUG: app will probably shit the bed if the user login page is displayed

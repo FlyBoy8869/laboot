@@ -37,7 +37,7 @@ class SerialConfigurator(Configurator):
 
         func: Callable
             this function will be called with 'dropped_filename' and is responsible
-            for performing the task of configuring the collector i.e., func(dropped_filename)
+            for performing the task of configuring the collector i.event., func(dropped_filename)
 
         Returns
         -------
@@ -48,7 +48,7 @@ class SerialConfigurator(Configurator):
         self.browser.get(url)
 
         if "offline" in self.browser.page_source:
-            print("There appears to be a network issue. The browser reports 'No internet'.")
+            print("There appears to be a network issue. The get_driver reports 'No internet'.")
             return ConfigurationResult(False, None, "Browser reports 'offline'")
 
         # TODO: some how, some day verify this will work

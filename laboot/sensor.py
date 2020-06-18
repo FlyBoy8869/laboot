@@ -6,14 +6,13 @@ from laboot.utilities.time import TestTimeRecord
 
 
 class Sensor:
-    def __init__(self, line_position, serial_number, test_time_record: TestTimeRecord, prior_failure: bool = False):
+    def __init__(self, line_position, serial_number, prior_failure: bool = False):
         self.test_position = line_position
         self.serial_number = serial_number
         self._prior_failure = prior_failure
-        # self.test_time = test_time
         self.tested = False
         self.result = "Not Tested"
-        self.test_time_record = test_time_record
+        self.test_time_record = TestTimeRecord(constants.TEST_TIME)
 
     @property
     def failure(self) -> bool:
@@ -31,8 +30,14 @@ class SensorLog:
     def __init__(self):
         self.log = dict()
 
+    def __len__(self):
+        return len(self.log)
+
+    def __iter__(self):
+        return iter(self.log.values())
+
     def append(self, sensor: Sensor):
-        self.log[(sensor.test_position, sensor.serial_number)] = sensor
+        self.log[(sensor.test_position, sensor.serial_number, sensor.failure)] = sensor
 
     def clear(self):
         self.log.clear()
@@ -63,13 +68,8 @@ class SensorLog:
         sensor.result = result
         sensor.tested = True
 
-    def _find_sensor_by_serial_number(self, serial_number) -> (Sensor, Optional):
+    def _find_sensor_by_serial_number(self, serial_number) -> Optional[Sensor]:
         for sensor in self.log.values():
             if sensor.serial_number == serial_number:
                 return sensor
         return None
-
-
-class TestTime:
-    def __init__(self):
-        self.test_time_remaining = 1500

@@ -13,4 +13,4 @@ spreadsheet/worksheet=Sensor(s)
 spreadsheet/serial_locations=D4 E4 F4 G4 H4 I4
 spreadsheet/result_locations=D5 E5 F5 G5 H5 I5
 
-drivers/chromedriver=laboot\resources\drivers\chromedriver\windows\version_80-0-3987-106\chromedriver.exe
+drivers/chromedriver=laboot\resources\drivers\chromedriver\windows\version_83_0_4103_39\chromedriver.exe
