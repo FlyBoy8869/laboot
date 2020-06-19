@@ -11,7 +11,7 @@ class TestSignals(QObject):
 
 
 class DropSignals(QObject):
-    dropped_filename = pyqtSignal(str)
+    dropped_filename = pyqtSignal()
 
 
 class CollectorSignals(QObject):

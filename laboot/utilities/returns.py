@@ -6,10 +6,7 @@ class Result:
         self.exception = exception
 
     def __bool__(self):
-        if self.value:
-            return True
-
-        return False
+        return self.value is not None
 
     def __call__(self):
         return self.value

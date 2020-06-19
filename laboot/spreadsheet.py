@@ -118,7 +118,8 @@ def _get_serial_numbers_from_worksheet(file_name: str) -> Result:
     for serial_location in serial_locations:
         serial_numbers.append(str(work_sheet_result()[serial_location].value))
 
-    serial_numbers = [serial_number if serial_number != 'None' else "0" for serial_number in serial_numbers]
+    serial_numbers = [serial_number if serial_number != 'None'
+                      else constants.BLANK_SERIAL_NUMBER for serial_number in serial_numbers]
     serial_numbers_with_failures_identified: Tuple[SerialNumberInfo] = _identify_failures(work_sheet_result(),
                                                                                           serial_numbers)
 

@@ -1,10 +1,9 @@
 import logging
 from time import sleep
-from typing import Tuple, Callable, Optional
+from typing import Callable, Optional
 
 from PyQt5.QtCore import Qt, QTimer, QSettings
-from PyQt5.QtGui import QFont, QBrush, QColor, QPixmap, QIcon, QCloseEvent, QCursor
-from PyQt5.QtMultimedia import QSound
+from PyQt5.QtGui import QFont, QPixmap, QIcon, QCloseEvent, QCursor
 from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QListWidgetItem, QLabel,
                              QHBoxLayout, QMessageBox, QAction, QStatusBar, QToolBar, QWidget, QMenu)
@@ -12,19 +11,20 @@ from selenium import webdriver
 
 from laboot import spreadsheet, constants
 from laboot.config.collector import collector
+from laboot.controllers import SerialNumberViewController
 from laboot.five_amp_test_dialog import FiveAmpTestDialog
 from laboot.sensor import Sensor, SensorLog
 from laboot.setdialog import SetDialog
 from laboot.signals import DropSignals
 from laboot.strategies import FromWebSiteStrategy
-from laboot.utilities import sound, time as util_time
+from laboot.utilities import time as util_time
 from laboot.utilities.returns import Result
 from laboot.widgets import LabootListWidget
 
 
 # version that shows in help dialog
 def version():
-    return '0.1.18'
+    return '0.1.19'
 
 
 def dialog_title():
@@ -32,13 +32,6 @@ def dialog_title():
 
 
 class MainWindow(QMainWindow):
-    snd_passed = QSound(r"laboot/resources/audio/cash_register.wav")
-    snd_failed = QSound(r"laboot/resources/audio/error_01.wav")
-
-    green_brush = QBrush(QColor(0, 255, 0, 100))
-    red_brush = QBrush(QColor(255, 0, 0, 100))
-    yellow_brush = QBrush(QColor(Qt.yellow))
-    black_brush = QBrush(QColor(Qt.black))
 
     PAUSE_FOR_WEB_SERVER_BROWSER_COMMUNICATION = 5
 
@@ -48,7 +41,7 @@ class MainWindow(QMainWindow):
         self.logger = logging.getLogger(__name__)
         self.setAcceptDrops(True)
         self.signals = DropSignals()
-        self.signals.dropped_filename.connect(self._process_file_drop)
+        self.signals.dropped_filename.connect(self._handle_file_drop)
         self.need_to_save = False
         self.browser = None
 
@@ -83,6 +76,8 @@ class MainWindow(QMainWindow):
             )
         )
 
+        self._serial_view_controller = SerialNumberViewController(self._sensor_view)
+
         # add widgets to layout
         self.left_layout.addWidget(self.lbl_sensors, alignment=Qt.AlignLeft)
         self.left_layout.addWidget(self._sensor_view)
@@ -116,7 +111,8 @@ class MainWindow(QMainWindow):
         if event.mimeData().hasUrls:
             event.setDropAction(Qt.CopyAction)
             event.accept()
-            self.signals.dropped_filename.emit(event.mimeData().urls()[0].toLocalFile())
+            self.spreadsheet_path = event.mimeData().urls()[0].toLocalFile()
+            self.signals.dropped_filename.emit()
         else:
             event.ignore()
 
@@ -173,62 +169,18 @@ class MainWindow(QMainWindow):
 
     def on_test_dialog_finished(self, result):
         self._record_sensor_test_result(result)
-        self._indicate_test_result(result)
-
+        self._serial_view_controller.indicate_test_result(result)
         self._flag_unsaved_test_results()
         self._enable_save_action()
 
     def _record_sensor_test_result(self, result):
         self._sensor_log.set_test_result(result.serial_number, result.result)
 
-    def _indicate_test_result(self, result):
-        sound.play_sound(self._get_sound_for_test_result(result))
-        self._sensor_view.currentItem().setBackground(self._get_brush_for_test_result(result))
-
-    def _get_sound_for_test_result(self, result):
-        return self.snd_passed if result.result == "Pass" else self.snd_failed
-
-    def _get_brush_for_test_result(self, result):
-        return self.green_brush if result.result == "Pass" else self.red_brush
-
     def _flag_unsaved_test_results(self):
         self.need_to_save = True
 
     def _enable_save_action(self):
         self.save_results_action.setEnabled(True)
-
-    def _add_sensors_to_log(self, serial_numbers: Tuple[spreadsheet.SerialNumberInfo]):
-        self._sensor_log.clear()
-
-        for serial_info in serial_numbers:
-            self._sensor_log.append(Sensor(serial_info.position, serial_info.serial_number, serial_info.failure))
-
-        self._initialize_list_view_from_sensor_log()
-
-    def _set_item_background_to_yellow_if_failure(self, item, failure):
-        if failure:
-            item.setBackground(self.yellow_brush)
-            item.setForeground(Qt.black)
-
-    def _create_list_widget_item_from_serial_number(self, serial_number):
-        return QListWidgetItem(serial_number)
-
-    def _is_valid_serial_number(self, serial_number):
-        return serial_number != "0"
-
-    def _add_serial_number_to_view(self, serial_number, failure):
-        if self._is_valid_serial_number(serial_number):
-            item = self._create_list_widget_item_from_serial_number(serial_number)
-            self._set_item_background_to_yellow_if_failure(item, failure)
-            self._sensor_view.addItem(item)
-
-    def _initialize_list_view(self, sensor_log):
-        for sensor in sensor_log:
-            self._add_serial_number_to_view(sensor.serial_number, sensor.failure)
-
-    def _initialize_list_view_from_sensor_log(self):
-        self._sensor_view.clear()
-        self._initialize_list_view(self._sensor_log)
 
     def _collector_configured(self):
         self._close_browser()
@@ -266,16 +218,11 @@ class MainWindow(QMainWindow):
 
         return self.browser
 
-    def _get_serial_numbers_from_spreadsheet(self, filename) -> Result:
-        print(f"importing from dropped_filename: {filename}")
-
-        return spreadsheet.get_serial_numbers(filename)
-
     def _new_set_defined(self, serial_numbers):
         if all(map(lambda n: not n.serial_number.isalpha(), serial_numbers)) and \
          all(map(lambda n: n.serial_number.isdigit(), serial_numbers)):
 
-            self._add_sensors_to_log(serial_numbers)
+            self._sensor_log.append_all(serial_numbers)
             self.collector_configuration_action.setEnabled(True)
 
             # auto configure the collector if applicable
@@ -285,23 +232,28 @@ class MainWindow(QMainWindow):
 
             self.need_to_save = False
 
-    def _process_file_drop(self, filename: str):
-        if self._ok_to_discard_test_results():
-            self.spreadsheet_path = filename
+    def _get_serial_numbers_from_spreadsheet(self) -> Result:
+        print(f"importing from dropped_filename: {self.spreadsheet_path}")
+        return spreadsheet.get_serial_numbers(self.spreadsheet_path)
 
-            if not (result_serial_numbers := self._get_serial_numbers_from_spreadsheet(filename)):
+    def _handle_file_drop(self):
+        if self._ok_to_discard_test_results():
+
+            if not (result_serial_numbers := self._get_serial_numbers_from_spreadsheet()):
                 QMessageBox.information(self, dialog_title(), result_serial_numbers.message, QMessageBox.Ok)
                 return
 
-            self._add_sensors_to_log(result_serial_numbers())
+            self._sensor_log.append_all(result_serial_numbers())
+            self._serial_view_controller.populate_from_sensor_log(self._sensor_log)
             self.collector_configuration_action.setEnabled(True)
-
-            if self.options_auto_collector_configuration_action.isChecked():
-                QTimer(self).singleShot(1000, self.collector_configuration_action.trigger)
-                self.collector_configured = True
-                return
+            self._auto_configure_collector_if_option_selected()
 
             self.collector_configured = False
+
+    def _auto_configure_collector_if_option_selected(self):
+        if self.options_auto_collector_configuration_action.isChecked():
+            QTimer(self).singleShot(1000, self.collector_configuration_action.trigger)
+            self.collector_configured = True
 
     def _test_sensor(self, sensor):
         if not sensor.tested:
@@ -403,7 +355,7 @@ class MainWindow(QMainWindow):
         self.define_set_action.triggered.connect(self.on_define_set_action_triggered)
 
         self.collector_configuration_action.triggered.connect(
-            lambda: self.on_configure_collector_action_triggered(self._sensor_log.get_serial_numbers(),
+            lambda: self.on_configure_collector_action_triggered(self._sensor_log.get_serial_numbers_as_tuple(),
                                                                  QSettings().value('main/config_password'),
                                                                  constants.URL_CONFIGURATION,
                                                                  lambda: self._get_browser(
@@ -437,8 +389,6 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(self.save_results_action)
         toolbar.addAction(self.exit_action)
-
-    # PRIVATE INTERFACE METHODS
 
     def _show_information_message(self, message):
         icon = QPixmap(r"laboot/resources/images/info_72.png")

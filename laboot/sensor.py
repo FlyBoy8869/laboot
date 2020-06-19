@@ -7,7 +7,7 @@ from laboot.utilities.time import TestTimeRecord
 
 class Sensor:
     def __init__(self, line_position, serial_number, prior_failure: bool = False):
-        self.test_position = line_position
+        self.position = line_position
         self.serial_number = serial_number
         self._prior_failure = prior_failure
         self.tested = False
@@ -37,7 +37,12 @@ class SensorLog:
         return iter(self.log.values())
 
     def append(self, sensor: Sensor):
-        self.log[(sensor.test_position, sensor.serial_number, sensor.failure)] = sensor
+        self.log[(sensor.position, sensor.serial_number, sensor.failure)] = sensor
+
+    def append_all(self, sensors):
+        self.clear()
+        for sensor in sensors:
+            self.append(Sensor(sensor.position, sensor.serial_number, sensor.failure))
 
     def clear(self):
         self.log.clear()
@@ -45,14 +50,17 @@ class SensorLog:
     def count(self):
         return len(self.log)
 
+    def get_failed_serial_numbers(self):
+        return [sensor.serial_number for sensor in self.log.values() if sensor.failure]
+
     def get_sensor(self, serial_number: str):
         return self._find_sensor_by_serial_number(serial_number)
 
-    def get_serial_numbers(self) -> tuple:
+    def get_serial_numbers_as_tuple(self) -> tuple:
         return tuple([sensor.serial_number for sensor in self.log.values()])
 
     def get_line_position(self, serial_number: str) -> int:
-        return self._find_sensor_by_serial_number(serial_number).test_position
+        return self._find_sensor_by_serial_number(serial_number).position
 
     def get_test_results(self) -> tuple:
         return tuple([sensor.result for sensor in self.log.values()])
