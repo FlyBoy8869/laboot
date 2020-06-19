@@ -24,7 +24,7 @@ from laboot.widgets import LabootListWidget
 
 # version that shows in help dialog
 def version():
-    return '0.1.17'
+    return '0.1.18'
 
 
 def dialog_title():
