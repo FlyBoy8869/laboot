@@ -38,6 +38,7 @@ class MainWindow(QMainWindow):
     green_brush = QBrush(QColor(0, 255, 0, 100))
     red_brush = QBrush(QColor(255, 0, 0, 100))
     yellow_brush = QBrush(QColor(Qt.yellow))
+    black_brush = QBrush(QColor(Qt.black))
 
     PAUSE_FOR_WEB_SERVER_BROWSER_COMMUNICATION = 5
 
@@ -207,6 +208,7 @@ class MainWindow(QMainWindow):
     def _set_item_background_to_yellow_if_failure(self, item, failure):
         if failure:
             item.setBackground(self.yellow_brush)
+            item.setForeground(Qt.black)
 
     def _create_list_widget_item_from_serial_number(self, serial_number):
         return QListWidgetItem(serial_number)
@@ -303,13 +305,9 @@ class MainWindow(QMainWindow):
 
     def _test_sensor(self, sensor):
         if not sensor.tested:
-            if sensor.failure and \
-                    self._ask_yes_no_question("Sensor failed previous sections of testing.\nAre you sure?") == \
-                    QMessageBox.No:
+            if sensor.failure and not self._ask_yes_no_question("Sensor failed previous sections of testing.\n" +
+                                                                "Do you want to continue?"):
                 return
-            else:
-                message = f"Sensor {sensor.serial_number} has already been tested."
-                QMessageBox.information(self, dialog_title(), message, QMessageBox.Ok)
 
             td = FiveAmpTestDialog(sensor,
                                    FromWebSiteStrategy(
@@ -409,7 +407,7 @@ class MainWindow(QMainWindow):
                                                                  QSettings().value('main/config_password'),
                                                                  constants.URL_CONFIGURATION,
                                                                  lambda: self._get_browser(
-                                                                     QSettings().value('drivers/chromedriver')
+                                                                     constants.CHROMEDRIVER_PATH
                                                                  ))
         )
 
@@ -451,11 +449,11 @@ class MainWindow(QMainWindow):
         msg_box.setIconPixmap(icon)
         msg_box.exec_()
 
-    def _ask_yes_no_question(self, message):
+    def _ask_yes_no_question(self, message) -> bool:
         return QMessageBox.question(self, f"{dialog_title()}",
                                     message,
                                     QMessageBox.Yes | QMessageBox.No,
-                                    QMessageBox.No)
+                                    QMessageBox.No) == QMessageBox.Yes
 
     def _save_ui_state(self, settings_repository):
         settings_repository.setValue("ui/menus/options/autoconfigcollector",

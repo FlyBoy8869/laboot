@@ -1,4 +1,6 @@
 # constants.py
+import platform
+
 from PyQt5.QtCore import QSettings
 
 print(f"constants: debugging enabled {QSettings().value('DEBUG')}")
@@ -91,9 +93,16 @@ ALL_RESULTS = (RSSI_RESULTS, REPORTING_RESULTS, RAW_CONFIG_RESULTS, HIGH_VOLTAGE
 
 TEST_TIMED_OUT = 1000
 
-if QSettings().value('DEBUG') == 'true':
-    URL_CONFIGURATION = "http://127.0.0.1:8080/LineWatch-M Website configuration.html"
-    URL_MODEM_STATUS = "http://127.0.0.1:8080/LineWatch-M Website modem status.html"
+if "macOS" in platform.platform():
+    CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/macos/version_83-0-4103-39/chromedriver"
+    print(f"using macOS version of Chromedriver at {CHROMEDRIVER_PATH}")
+else:
+    CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/windows/version_83-0-4103-39/chromedriver.exe"
+    print(f"using Windows version of Chromedriver at {CHROMEDRIVER_PATH}")
+
+if QSettings().value('DEBUG') == True:
+    URL_CONFIGURATION = "http://10.211.55.18:5000/configuration"
+    URL_MODEM_STATUS = "http://10.211.55.18:5000/modemstatus"
 
     REQUEST_TIMEOUT = 10
     TEST_TIME = 60
