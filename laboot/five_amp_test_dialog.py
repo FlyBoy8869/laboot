@@ -1,29 +1,30 @@
 # five_amp_test_dialog.py
-import logging
+import re
 from collections import namedtuple
 from datetime import datetime
 
-from PyQt5.QtCore import QSettings, QTimer, QEvent, Qt
+import requests
+from PyQt5.QtCore import QTimer, QEvent, Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QLineEdit, QDialogButtonBox, QMessageBox
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QLineEdit, QDialogButtonBox
 
-import laboot.strategies.strategy
 from laboot import constants
 from laboot.sensor import Sensor
 from laboot.signals import TestSignals
 from laboot.utilities import time as utilities_time
-from laboot.utilities.time import TestTimeRecord
 
 TestResult = namedtuple("TestResult", "serial_number result")
 
+link_pattern = re.compile(r"\s*\d{7}\s*\d{7}\s*\d{7}\s*-?\d{1,2}")
+serial_pattern = re.compile(r"\s*\d{7}")
+
 
 class FiveAmpTestDialog(QDialog):
-    def __init__(self, sensor: Sensor, strategy, parent=None):
+    def __init__(self, parent, sensor: Sensor):
         super().__init__(parent)
 
         self._sensor = sensor
         self.serial_number = sensor.serial_number
-        self.strategy = strategy
         self.signals = TestSignals()
 
         self.link_timer_interval = constants.LINK_CHECK_TIME
@@ -80,7 +81,7 @@ class FiveAmpTestDialog(QDialog):
 
         # update status every second
         self.status_timer = QTimer(self)
-        self.status_timer.timeout.connect(self.onStatusTimerTimeout)
+        self.status_timer.timeout.connect(self.on_status_timer_timeout)
         self.status_timer.start(1000)
 
         self.resize(300, 50)
@@ -102,9 +103,9 @@ class FiveAmpTestDialog(QDialog):
                 return False
 
         # the I don't care about other widgets response :)
-        return QDialog.eventFilter(obj, event)
+        return super().eventFilter(obj, event)
 
-    def onStatusTimerTimeout(self):
+    def on_status_timer_timeout(self):
         self._process_link_timer()
         self._process_test_timer()
 
@@ -122,25 +123,16 @@ class FiveAmpTestDialog(QDialog):
             f"Link check in {utilities_time.format_seconds_to_minutes_seconds(self.link_timer_count_down)}")
 
         self.pb_link_check.setValue(self.link_timer_count_down)
-        self.pb_link_check.update()
 
         if self._is_time_to_check_link_status():
             self.lbl_link_check.setText("Checking for link...")
             self.output.clear()
 
-            link_status = self.strategy.check_link_status()
-            if link_status.status == laboot.strategies.strategy.STATUS_ITEM_CONNECTED:
+            if self._check_for_link():
                 self.signals.testPassed.emit(TestResult(self.serial_number, "Pass"))
                 self.done(QDialog.Accepted)
-            elif link_status.status == laboot.strategies.strategy.STATUS_REQUEST_TIMED_OUT:
-                QMessageBox.warning(self, "Low Amperage Boot", link_status.message, QMessageBox.Ok)
-                self.done(QDialog.Rejected)
-            elif link_status.status == laboot.strategies.strategy.STATUS_ITEM_NOT_PRESENT:
-                QMessageBox.warning(self, "Low Amperate Boot", f"Serial Number {self.serial_number} not found.",
-                                    QMessageBox.Ok)
-                self.done(QDialog.Rejected)
 
-            QTimer(self).singleShot(1000, lambda: self.output.setText("no connection detected..."))
+            QTimer(self).singleShot(1000, lambda: self.output.setText("no connection detected"))
             self.link_timer_count_down = self.link_timer_interval
 
     def _process_test_timer(self):
@@ -156,5 +148,13 @@ class FiveAmpTestDialog(QDialog):
             f"Test time remaining: {utilities_time.format_seconds_to_minutes_seconds(self.test_time_remaining)}\t\t\t"
         )
 
-    def _is_time_to_check_link_status(self):
-        return True if self.link_timer_count_down <= 0 else False
+    def _is_time_to_check_link_status(self) -> bool:
+        return self.link_timer_count_down <= 0
+
+    def _check_for_link(self):
+        for line in [line for line in requests.get(constants.URL_MODEM_STATUS).text.split('\n')
+                     if serial_pattern.match(line)]:
+            if (match := link_pattern.match(line)) and match[0].split()[0] == self.serial_number:
+                return True
+
+        return False

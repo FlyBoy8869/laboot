@@ -16,7 +16,6 @@ from laboot.five_amp_test_dialog import FiveAmpTestDialog
 from laboot.sensor import Sensor, SensorLog
 from laboot.setdialog import SetDialog
 from laboot.signals import DropSignals
-from laboot.strategies import FromWebSiteStrategy
 from laboot.utilities import time as util_time
 from laboot.utilities.returns import Result
 from laboot.widgets import LabootListWidget
@@ -261,13 +260,7 @@ class MainWindow(QMainWindow):
                                                                 "Do you want to continue?"):
                 return
 
-            td = FiveAmpTestDialog(sensor,
-                                   FromWebSiteStrategy(
-                                       sensor.serial_number,
-                                       constants.URL_MODEM_STATUS
-                                   ),
-                                   parent=self
-                                   )
+            td = FiveAmpTestDialog(self, sensor)
             td.signals.testPassed.connect(self.on_test_dialog_finished)
             td.signals.testFailed.connect(self.on_test_dialog_finished)
             td.exec_()
