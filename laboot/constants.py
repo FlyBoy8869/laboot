@@ -1,7 +1,6 @@
 # constants.py
-from laboot import oscomp
-from laboot.oscomp import OSType
-from laboot.oscomp import QSettingsAdapter
+from LWTest.common import oscomp
+from LWTest.common.oscomp import OSType, QSettingsAdapter
 
 TEMPERATURE_REFERENCE = 'C17'
 

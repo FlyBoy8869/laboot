@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Python 3.8 (laboot)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="LWTest" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />
