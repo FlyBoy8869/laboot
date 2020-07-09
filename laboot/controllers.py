@@ -3,8 +3,9 @@ from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtWidgets import QListWidgetItem
 
-from laboot import constants, oscomp
-from laboot.oscomp import OSType
+from laboot import constants
+from LWTest.common import oscomp
+from LWTest.common.oscomp import OSType
 from laboot.utilities import sound
 from laboot.widgets import LabootListWidget
 

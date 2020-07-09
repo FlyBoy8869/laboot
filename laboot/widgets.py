@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QPoint
+from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem
 

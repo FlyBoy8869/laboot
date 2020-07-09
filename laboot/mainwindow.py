@@ -292,7 +292,7 @@ class MainWindow(QMainWindow):
         self.define_set_action = QAction(QIcon(r"laboot/resources/images/menu_icons/set-02_128.png"),
                                          "", self)
         self.collector_configuration_action = QAction(QIcon(r"laboot/resources/images/menu_icons/config-02_128.png"),
-                                               "", self)
+                                                      "", self)
         self.save_results_action = QAction(QIcon(r"laboot/resources/images/menu_icons/save-01_48.png"),
                                            "", self)
         self.exit_action = QAction(QIcon(r"laboot/resources/images/menu_icons/exit-01_128.png"), "", self)

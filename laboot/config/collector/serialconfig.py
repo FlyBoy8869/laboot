@@ -1,10 +1,7 @@
 # collector.py
 import logging
 from collections import namedtuple
-from time import sleep
 from typing import List, Callable, Tuple
-
-from PyQt5.QtCore import QSettings
 
 from laboot.config.collector.configurator import Configurator
 
@@ -14,8 +11,6 @@ ConfigurationResult = namedtuple("ConfigurationResult", "result exc message")
 class SerialConfigurator(Configurator):
     def __init__(self, url, serial_numbers):
         super().__init__()
-
-        settings = QSettings()
 
         self.url = url
         self.serial_numbers = serial_numbers

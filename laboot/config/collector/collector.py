@@ -2,8 +2,6 @@
 import logging
 from typing import List, Callable, Any
 
-from PyQt5.QtCore import QSettings
-
 from laboot.config.dom.search import SearchDom
 from laboot.signals import CollectorSignals
 

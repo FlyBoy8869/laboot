@@ -1,10 +1,11 @@
 # waitonpage.py
 
+from typing import List
+
 import requests
 from PyQt5.QtCore import QSettings, Qt, QTimer, QEvent
-from PyQt5.QtGui import QFont, QMovie
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QDialogButtonBox, QHBoxLayout
-from typing import List
+from PyQt5.QtGui import QMovie
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox, QHBoxLayout
 
 
 class WaitForTextOnPage(QDialog):
@@ -127,14 +128,3 @@ class WaitForTextOnPage(QDialog):
                 return True
 
         return False
-
-    def eventFilter(self, obj, event) -> bool:
-        if obj is self.pb_counter:
-            if event.type() == QEvent.Resize:
-                self.pb_counter.setFixedHeight(10)
-                return True
-            else:
-                return False
-
-        # the I don't care about other widgets response :)
-        return QDialog.eventFilter(obj, event)
