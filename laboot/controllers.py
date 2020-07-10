@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QListWidgetItem
 
 from laboot import constants
 from LWTest.common import oscomp
-from LWTest.common.oscomp import OSType
+from LWTest.common.oscomp import OSBrand
 from laboot.utilities import sound
 from laboot.widgets import LabootListWidget
 
@@ -38,7 +38,7 @@ class SerialNumberViewController:
     def _highlight_failures(self, failures):
         for item in self._get_failures(failures):
             self._set_item_background_to_yellow(item)
-            if oscomp.os_type == OSType.MAC:
+            if oscomp.os_brand == OSBrand.MAC:
                 self._set_item_text_color_to_black(item)
 
     def _add_serial_numbers_to_view(self, serial_numbers):

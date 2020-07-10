@@ -1,6 +1,6 @@
 # constants.py
 from LWTest.common import oscomp
-from LWTest.common.oscomp import OSType, QSettingsAdapter
+from LWTest.common.oscomp import OSBrand, QSettingsAdapter
 
 TEMPERATURE_REFERENCE = 'C17'
 
@@ -90,7 +90,7 @@ ALL_RESULTS = (RSSI_RESULTS, REPORTING_RESULTS, RAW_CONFIG_RESULTS, HIGH_VOLTAGE
 
 TEST_TIMED_OUT = 1000
 
-if oscomp.os_type == OSType.MAC:
+if oscomp.os_brand == OSBrand.MAC:
     CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/macos/version_83-0-4103-39/chromedriver"
 else:
     CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/windows/version_83-0-4103-39/chromedriver.exe"
