@@ -64,8 +64,8 @@ class Configurator:
     def _enter_password(self):
         self._find_password_element().send_keys(self.config_password)
 
-    def _get_browser(self):
-        # TODO: add exception handling
+    @staticmethod
+    def _get_browser():
         settings = QSettings()
 
         driver_executable = settings.value("drivers/chromedriver")

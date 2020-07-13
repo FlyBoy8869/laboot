@@ -46,8 +46,8 @@ class SetDialog(QDialog):
         super().accept()
         self.signals.newSerialNumbers.emit(self._get_serial_numbers())
 
-    def showEvent(self, QShowEvent):
-        super().showEvent(QShowEvent)
+    def showEvent(self, q_show_event):
+        super().showEvent(q_show_event)
         for line_edit in self.line_edits:
             line_edit.clear()
 

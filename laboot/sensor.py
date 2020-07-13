@@ -65,9 +65,6 @@ class SensorLog:
     def get_test_results(self) -> tuple:
         return tuple([sensor.result for sensor in self.log.values()])
 
-    def is_tested(self, serial_number: str) -> bool:
-        return self._find_sensor_by_serial_number(serial_number).is_tested()
-
     def set_test_time(self, serial_number: str, test_time_record: TestTimeRecord):
         self._find_sensor_by_serial_number(serial_number).set_test_time(test_time_record)
 

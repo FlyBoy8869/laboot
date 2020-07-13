@@ -15,6 +15,7 @@ def main(args):
     app = QApplication(args)
 
     from laboot.mainwindow import MainWindow
+    # noinspection PyUnusedLocal
     window = MainWindow()
     sys.exit(app.exec_())
 

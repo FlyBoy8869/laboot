@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
 
         self.start_five_amp_action.triggered.connect(self.on_start_five_amp_test_action_triggered)
         self.save_results_action.triggered.connect(self.on_save_action_triggered)
-        self.exit_action.triggered.connect(self.close)
+        self.exit_action.triggered.connect(self._close)
 
         self.options_headless_action.toggled.connect(lambda s: settings.setValue("ui/menus/options/headless", s))
 
@@ -402,3 +402,6 @@ class MainWindow(QMainWindow):
         settings_repository.setValue("ui/menus/options/autoconfigcollector",
                                      str(self.options_auto_collector_configuration_action.isChecked())
                                      )
+
+    def _close(self):
+        self.close()

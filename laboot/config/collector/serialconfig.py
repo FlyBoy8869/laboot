@@ -38,7 +38,6 @@ class SerialConfigurator(Configurator):
         -------
             True if the collector was successfully configured.
             False if an message occurred."""
-        logger = logging.getLogger(__name__)
 
         self.browser.get(url)
 

@@ -3,7 +3,7 @@
 from typing import List
 
 import requests
-from PyQt5.QtCore import QSettings, Qt, QTimer, QEvent
+from PyQt5.QtCore import QSettings, Qt, QTimer
 from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox, QHBoxLayout
 
