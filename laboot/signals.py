@@ -17,6 +17,7 @@ class DropSignals(QObject):
 class CollectorSignals(QObject):
     offline = pyqtSignal(str)
     configured = pyqtSignal()
+    finished = pyqtSignal()
 
 
 class DefineSetSignals(QObject):

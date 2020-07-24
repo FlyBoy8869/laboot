@@ -1,14 +1,14 @@
 import logging
-from time import sleep
-from typing import Callable, Optional
-
 from PyQt5.QtCore import Qt, QTimer, QSettings
 from PyQt5.QtGui import QFont, QPixmap, QIcon, QCloseEvent, QCursor
 from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QListWidgetItem, QLabel,
                              QHBoxLayout, QMessageBox, QAction, QStatusBar, QToolBar, QWidget, QMenu)
 from selenium import webdriver
+from time import sleep
+from typing import Callable, Optional
 
+import linewatchshared
 from laboot import spreadsheet, constants
 from laboot.config.collector import collector
 from laboot.controllers import SerialNumberViewController
@@ -21,8 +21,8 @@ from laboot.utilities.returns import Result
 from laboot.widgets import LabootListWidget
 
 
-# version that shows in help dialog
 def version():
+    # version that shows in help dialog
     return '0.1.19'
 
 
@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):
         self.signals.dropped_filename.connect(self._handle_file_drop)
         self.need_to_save = False
         self.browser = None
+        self.change_tracker = linewatchshared.ChangeTracker()
 
         self.spreadsheet_path: str = ""
         self._sensor_log = SensorLog()
@@ -123,7 +124,8 @@ class MainWindow(QMainWindow):
         if serial_numbers:
             a_collector = collector.CollectorConfigurator(get_driver(), config_url, password)
             a_collector.signals.configured.connect(self._collector_configured)
-            a_collector.signals.offline.connect(self._handle_serial_number_configuration_error)
+            a_collector.signals.offline.connect(self._handle_collector_offline)
+            a_collector.signals.finished.connect(self._confirm_collector_update)
             a_collector.configure_serial_numbers(serial_numbers)
 
     def on_define_set_action_triggered(self):
@@ -141,7 +143,7 @@ class MainWindow(QMainWindow):
 
     def on_save_action_triggered(self):
         if result := spreadsheet.save_test_results(self.spreadsheet_path, self._sensor_log.get_test_results()):
-            self.need_to_save = False
+            self.change_tracker.clear_change_flag()
 
         QMessageBox.information(self, "LWTest - Save Data", result.message, QMessageBox.Ok)
 
@@ -176,33 +178,32 @@ class MainWindow(QMainWindow):
         self._sensor_log.set_test_result(result.serial_number, result.result)
 
     def _flag_unsaved_test_results(self):
-        self.need_to_save = True
+        self.change_tracker.set_change_flag()
 
     def _enable_save_action(self):
         self.save_results_action.setEnabled(True)
 
     def _collector_configured(self):
         self._close_browser()
-        self._show_information_message("Serial numbers sent to collector.")
-
         self.collector_configured = True
         self.start_five_amp_action.setEnabled(True)
 
-    def _handle_serial_number_configuration_error(self, message):
+    def _confirm_collector_update(self):
+        # dialog = linewatchshared.interface.dialogs.serialupdate.SerialUpdateConfirmation(
+        #     self._sensor_log.get_serial_numbers_as_tuple(),
+        #     parent=self
+        # )
+        #
+        # dialog.exec_()
+        pass
+
+    def _handle_collector_offline(self, message):
         self._close_browser()
         self._show_information_message(message)
         self.collector_configuration_action.setEnabled(True)
 
-    def _ask_to_discard_test_results(self, clear_flag):
-        if self._ask_yes_no_question("Discard results?\t\t\t\t") == QMessageBox.No:
-            return False
-
-        self.need_to_save = not clear_flag
-
-        return True
-
     def _ok_to_discard_test_results(self, clear_flag=True):
-        return not self.need_to_save or self._ask_to_discard_test_results(clear_flag)
+        return self.change_tracker.can_discard(self)
 
     def _close_browser(self):
         if self.browser:

@@ -9,6 +9,7 @@
     <orderEntry type="jdk" jdkName="Python 3.8 (laboot)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="LWTest" />
+    <orderEntry type="module" module-name="linewatchshared" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />

@@ -57,6 +57,7 @@ class CollectorConfigurator:
         self._submit_changes()
 
         self.signals.configured.emit()
+        self.signals.finished.emit()
 
     def _configure_serial_numbers(self, serial_numbers: List[str]):
         """Must receive a list of 6 strings representing numeric values."""

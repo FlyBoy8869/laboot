@@ -1,6 +1,6 @@
 # constants.py
-from LWTest.common import oscomp
-from LWTest.common.oscomp import OSBrand, QSettingsAdapter
+from linewatchshared import oscomp
+from linewatchshared.oscomp import OSBrand, QSettingsAdapter
 
 TEMPERATURE_REFERENCE = 'C17'
 
@@ -90,22 +90,31 @@ ALL_RESULTS = (RSSI_RESULTS, REPORTING_RESULTS, RAW_CONFIG_RESULTS, HIGH_VOLTAGE
 
 TEST_TIMED_OUT = 1000
 
+CHROMEDRIVER_PATH: str = ""
 if oscomp.os_brand == OSBrand.MAC:
     CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/macos/version_83-0-4103-39/chromedriver"
-else:
+elif oscomp.os_brand == OSBrand.WINDOWS:
     CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/windows/version_83-0-4103-39/chromedriver.exe"
+elif oscomp.os_brand == OSBrand.LINUX:
+    CHROMEDRIVER_PATH = r"laboot/resources/drivers/chromedriver/linux/version_83-0-4103-39/chromedriver"
+else:
+    raise RuntimeError("Laboot does not support chromedriver on your OS.")
 
 if QSettingsAdapter.value('DEBUG') == 'true':
-    URL_CONFIGURATION = "http://10.211.55.18:5000/configuration"
-    URL_MODEM_STATUS = "http://10.211.55.18:5000/modemstatus"
+    import linewatchshared.constants.debug_urls as debug_urls
+    URL_CONFIGURATION = debug_urls.URL_CONFIGURATION
+    URL_MODEM_STATUS = debug_urls.URL_MODEM_STATUS
 
+    COLLECTOR_ACCEPTED_SERIAL_NUMBERS_TIMEOUT = 10
     REQUEST_TIMEOUT = 10
-    TEST_TIME = 60
+    TEST_TIME = 30
     LINK_CHECK_TIME = 10
 else:
-    URL_CONFIGURATION = "http://192.168.2.1/index.php/main/configuration"
-    URL_MODEM_STATUS = "http://192.168.2.1/index.php/main/modem_status"
+    import linewatchshared.constants.release_urls as released_urls
+    URL_CONFIGURATION = released_urls.URL_CONFIGURATION
+    URL_MODEM_STATUS = released_urls.URL_MODEM_STATUS
 
+    COLLECTOR_ACCEPTED_SERIAL_NUMBERS_TIMEOUT = 180
     REQUEST_TIMEOUT = 10
     TEST_TIME = 1500
     LINK_CHECK_TIME = 10

@@ -4,8 +4,8 @@ from PyQt5.QtMultimedia import QSound
 from PyQt5.QtWidgets import QListWidgetItem
 
 from laboot import constants
-from LWTest.common import oscomp
-from LWTest.common.oscomp import OSBrand
+from linewatchshared import oscomp
+from linewatchshared.oscomp import OSBrand
 from laboot.utilities import sound
 from laboot.widgets import LabootListWidget
 
@@ -13,11 +13,12 @@ from laboot.widgets import LabootListWidget
 _snd_passed = QSound(r"laboot/resources/audio/cash_register.wav")
 _snd_failed = QSound(r"laboot/resources/audio/error_01.wav")
 
-_green_brush = QBrush(QColor(0, 255, 0, 100))
-_red_brush = QBrush(QColor(255, 0, 0, 100))
+_green_brush = QBrush(QColor(Qt.darkGreen))
+_red_brush = QBrush(QColor(255, 0, 0, 255))
 
 _yellow_brush = QBrush(QColor(Qt.yellow))
 _black_brush = QBrush(QColor(Qt.black))
+_white_brush = QBrush(QColor(Qt.white))
 
 
 class SerialNumberViewController:
@@ -30,7 +31,9 @@ class SerialNumberViewController:
 
     def indicate_test_result(self, result):
         sound.play_sound(self._get_sound_for_test_result(result))
-        self._view.currentItem().setBackground(self._get_brush_for_test_result(result))
+        foreground_brush, background_brush = self._get_brush_for_test_result(result)
+        self._view.currentItem().setForeground(foreground_brush)
+        self._view.currentItem().setBackground(background_brush)
 
     def _populate(self, serial_numbers):
         self._add_serial_numbers_to_view(serial_numbers)
@@ -43,10 +46,13 @@ class SerialNumberViewController:
 
     def _add_serial_numbers_to_view(self, serial_numbers):
         self._view.clear()
+        item = None
         for serial_number in [serial_number for serial_number in serial_numbers
                               if serial_number is not constants.BLANK_SERIAL_NUMBER]:
             item = self._create_item_with_serial_number(serial_number)
             self._view.addItem(item)
+
+        self._view.setMinimumHeight(item.sizeHint().height() * 6)
 
     def _get_failures(self, serial_numbers):
         return [results[0] for serial_number in serial_numbers
@@ -70,4 +76,4 @@ class SerialNumberViewController:
 
     @staticmethod
     def _get_brush_for_test_result(result):
-        return _green_brush if result.result == "Pass" else _red_brush
+        return (_white_brush, _green_brush) if result.result == "Pass" else (_white_brush, _red_brush)
